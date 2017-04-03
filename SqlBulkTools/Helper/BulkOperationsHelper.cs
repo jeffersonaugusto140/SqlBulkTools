@@ -661,6 +661,8 @@ namespace SqlBulkTools
         public static DataTable ConvertListToDataTable<T>(List<PropertyInfo> propertyInfoList, DataTable dataTable, IEnumerable<T> list, HashSet<string> columns, Dictionary<string, int> ordinalDic,
             Dictionary<int, T> outputIdentityDic = null)
         {
+            Dictionary<PropertyInfo, Attribute> propertyCustomAttributeDictionary 
+                = propertyInfoList.ToDictionary(pi => pi, pi => pi.PropertyType.GetCustomAttribute(typeof(ComplexTypeAttribute)));
 
             int internalIdCounter = 0;
 
@@ -671,7 +673,9 @@ namespace SqlBulkTools
                 {
                     foreach (var property in propertyInfoList)
                     {
-                        if (property.PropertyType.GetCustomAttribute(typeof(ComplexTypeAttribute)) != null)
+                        Attribute attr;
+                        bool res = propertyCustomAttributeDictionary.TryGetValue(property, out attr);
+                        if (res && attr != null)
                         {
                             var complexPropertyList = property.PropertyType.GetProperties();
 
