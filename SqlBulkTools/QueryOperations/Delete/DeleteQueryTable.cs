@@ -19,16 +19,14 @@ namespace SqlBulkTools
         /// 
         /// </summary>
         /// <param name="tableName"></param>
-        public DeleteQueryTable(string tableName)
+        /// <param name="schema"></param>
+        public DeleteQueryTable(string tableName, string schema)
         {
             _sqlTimeout = 600;
-            _schema = Constants.DefaultSchemaName;
-            Columns = new HashSet<string>();
-            CustomColumnMappings = new Dictionary<string, string>();
             _tableName = tableName;
-            _schema = Constants.DefaultSchemaName;
+            _schema = schema;
             Columns = new HashSet<string>();
-            CustomColumnMappings = new Dictionary<string, string>();
+            CustomColumnMappings = new Dictionary<string, string>();          
         }
 
         /// <summary>

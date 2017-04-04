@@ -448,7 +448,6 @@ namespace SqlBulkTools.IntegrationTests
                         var prevId = _bookCollection[j].Id;
                         _bookCollection[j] = newBook;
                         _bookCollection[j].Id = prevId;
-
                     }
 
                     bulk.Setup<Book>()
@@ -572,8 +571,7 @@ namespace SqlBulkTools.IntegrationTests
                 {
                     bulk.Setup<SchemaTest2>()
                         .ForCollection(conflictingSchemaCol)
-                        .WithTable("SchemaTest")
-                        .WithSchema("AnotherSchema")
+                        .WithTable("AnotherSchema.SchemaTest")
                         .AddColumn(x => x.ColumnA)
                         .BulkDelete()
                         .MatchTargetOn(x => x.ColumnA)

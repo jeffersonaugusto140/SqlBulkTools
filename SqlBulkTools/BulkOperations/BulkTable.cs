@@ -84,11 +84,6 @@ namespace SqlBulkTools.BulkCopy
             return new BulkAddColumnList<T>(_list, _tableName, Columns, CustomColumnMappings, _schema, _bulkCopySettings, _propertyInfoList);
         }
 
-        /// <summary>
-        /// Explicitly set a schema. If a schema is not added, the system default schema name 'dbo' will used.
-        /// </summary>
-        /// <param name="schema"></param>
-        /// <returns></returns>
         public BulkTable<T> WithSchema(string schema)
         {
             if (_schema != Constants.DefaultSchemaName)
