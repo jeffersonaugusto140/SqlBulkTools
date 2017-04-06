@@ -177,6 +177,53 @@ namespace SqlBulkTools.IntegrationTests
         }
 
         [TestMethod]
+        public void SqlBulkTools_BulkInsert_KeepIdentity()
+        {
+            var bulk = new BulkOperations();
+            List<Book> bookList = new List<Book>();
+
+            for (int i = 0; i < 30; i++)
+            {
+                bookList.Add(new Book
+                {
+                    Id = i + 5000000,
+                    Description = "Some desc",
+                    Price = 450.23M,
+                    ISBN = "1234567891234"
+                });
+            }
+
+            using (TransactionScope trans = new TransactionScope())
+            {
+                using (SqlConnection conn = new SqlConnection(ConfigurationManager
+                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                {
+                    bulk.Setup<Book>()
+                        .ForDeleteQuery()
+                        .WithTable("Books")
+                        .Delete()
+                        .AllRecords()
+                        .Commit(conn);
+
+                    bulk.Setup<Book>()
+                        .ForCollection(bookList)
+                        .WithTable("Books")
+                        .WithBulkCopySettings(new BulkCopySettings()
+                        {
+                            SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity
+                        })
+                        .AddAllColumns()
+                        .BulkInsert()
+                        .Commit(conn);
+                }
+
+                trans.Complete();
+            }
+
+            Assert.IsTrue(_dataAccess.GetBookList().First().Id == 5000000);
+        }
+
+        [TestMethod]
         public void SqlBulkTools_BulkInsertForComplexType_AddColumnsManually()
         {
             var bulk = new BulkOperations();
