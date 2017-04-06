@@ -381,6 +381,7 @@ namespace SqlBulkTools
         private string GetCommand(SqlConnection connection)
         {
             string comm =
+                    GetSetIdentityCmd(on: true) +
                     "MERGE INTO " + BulkOperationsHelper.GetFullQualifyingTableName(connection.Database, _schema, _tableName) +
                     $" WITH ({_tableHint}) AS Target " +
                     "USING " + Constants.TempTableName + " AS Source " +
@@ -388,17 +389,28 @@ namespace SqlBulkTools
                         Constants.SourceAlias, Constants.TargetAlias, base._collationColumnDic, _nullableColumnDic) +
                     "WHEN MATCHED " + BulkOperationsHelper.BuildPredicateQuery(_matchTargetOn.ToArray(), _updatePredicates, Constants.TargetAlias, base._collationColumnDic) +
                     "THEN UPDATE " +
-                    BulkOperationsHelper.BuildUpdateSet(_columns, Constants.SourceAlias, Constants.TargetAlias, _identityColumn, _excludeFromUpdate) +
+                    BulkOperationsHelper.BuildUpdateSet(_columns, Constants.SourceAlias, Constants.TargetAlias, _identityColumn, _excludeFromUpdate, _bulkCopySettings) +
                     "WHEN NOT MATCHED BY TARGET THEN " +
-                    BulkOperationsHelper.BuildInsertSet(_columns, Constants.SourceAlias, _identityColumn) +
+                    BulkOperationsHelper.BuildInsertSet(_columns, Constants.SourceAlias, _identityColumn, _bulkCopySettings) +
                     (_deleteWhenNotMatchedFlag ? " WHEN NOT MATCHED BY SOURCE " + BulkOperationsHelper.BuildPredicateQuery(_matchTargetOn.ToArray(),
                     _deletePredicates, Constants.TargetAlias, base._collationColumnDic) +
                     "THEN DELETE " : " ") +
                     BulkOperationsHelper.GetOutputIdentityCmd(_identityColumn, _outputIdentity, Constants.TempOutputTableName,
                         OperationType.InsertOrUpdate) + "; " +
+                    GetSetIdentityCmd(on: false) +
                     "DROP TABLE " + Constants.TempTableName + ";";
 
             return comm;
+        }
+
+        private string GetSetIdentityCmd(bool on)
+        {
+            string onOrOffStr = on ? "ON" : "OFF";
+
+            if (_bulkCopySettings == null)
+                return string.Empty;
+
+            return _bulkCopySettings.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity) ? $"SET IDENTITY_INSERT [{_schema}].[{_tableName}] {onOrOffStr} " : string.Empty;
         }
 
     }

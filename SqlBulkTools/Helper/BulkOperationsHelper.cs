@@ -395,7 +395,7 @@ namespace SqlBulkTools
 
         }
 
-        internal static string BuildUpdateSet(HashSet<string> columns, string sourceAlias, string targetAlias, string identityColumn, HashSet<string> excludeFromUpdate = null)
+        internal static string BuildUpdateSet(HashSet<string> columns, string sourceAlias, string targetAlias, string identityColumn, HashSet<string> excludeFromUpdate = null, BulkCopySettings _bulkCopySettings = null)
         {
             StringBuilder command = new StringBuilder();
             List<string> paramsSeparated = new List<string>();
@@ -409,6 +409,11 @@ namespace SqlBulkTools
             {
                 if ((column != identityColumn || identityColumn == null) && !excludeFromUpdate.Contains(column))
                 {
+                    
+                    if (column == identityColumn && _bulkCopySettings != null 
+                        && _bulkCopySettings.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity))
+                        continue;
+
                     if (column != Constants.InternalId)
                         paramsSeparated.Add($"[{targetAlias}].[{column}] = [{sourceAlias}].[{column}]");
                 }
@@ -450,7 +455,7 @@ namespace SqlBulkTools
             return command.ToString();
         }
 
-        internal static string BuildInsertSet(HashSet<string> columns, string sourceAlias, string identityColumn)
+        internal static string BuildInsertSet(HashSet<string> columns, string sourceAlias, string identityColumn, BulkCopySettings bulkCopySettings = null)
         {
             StringBuilder command = new StringBuilder();
             List<string> insertColumns = new List<string>();
@@ -460,13 +465,14 @@ namespace SqlBulkTools
 
             foreach (var column in columns.ToList().OrderBy(x => x))
             {
-
-                if (column != Constants.InternalId && column != identityColumn)
+                if ((column != Constants.InternalId && column != identityColumn) || 
+                    column == identityColumn 
+                    && bulkCopySettings != null 
+                    && bulkCopySettings.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity))
                 {
                     insertColumns.Add($"[{column}]");
                     values.Add($"[{sourceAlias}].[{column}]");
                 }
-
             }
 
             command.Append($"{string.Join(", ", insertColumns)}) values ({string.Join(", ", values)})");
