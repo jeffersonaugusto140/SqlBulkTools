@@ -14,7 +14,8 @@ namespace SqlBulkTools
         /// <returns></returns>
         public DeleteQueryTable<T> WithTable(string tableName)
         {
-            return new DeleteQueryTable<T>(tableName);
+            var table = BulkOperationsHelper.GetTableAndSchema(tableName);
+            return new DeleteQueryTable<T>(table.Name, table.Schema);
         }
     }
 }

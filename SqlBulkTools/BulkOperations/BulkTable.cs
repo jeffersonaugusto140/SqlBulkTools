@@ -85,7 +85,7 @@ namespace SqlBulkTools.BulkCopy
         }
 
         /// <summary>
-        /// Explicitly set a schema. If a schema is not added, the system default schema name 'dbo' will used.
+        /// 
         /// </summary>
         /// <param name="schema"></param>
         /// <returns></returns>
