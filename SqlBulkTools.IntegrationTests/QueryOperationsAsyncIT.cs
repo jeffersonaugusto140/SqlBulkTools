@@ -17,12 +17,14 @@ namespace SqlBulkTools.IntegrationTests
     {
         private BookRandomizer _randomizer;
         private DataAccess _dataAccess;
+        private string _connectionString;
 
         [TestInitialize]
         public void Setup()
         {
             _dataAccess = new DataAccess();
             _randomizer = new BookRandomizer();
+            _connectionString = _connectionString = ConfigurationManager.ConnectionStrings["SqlBulkToolsTest"].ConnectionString;
         }
 
         [TestMethod]
@@ -40,8 +42,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     await bulk.Setup<Book>()
                         .ForCollection(books)
@@ -84,8 +85,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     await bulk.Setup<Book>()
                         .ForCollection(books)
@@ -145,8 +145,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     await bulk.Setup<Book>()
                         .ForCollection(books)
@@ -198,8 +197,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     await bulk.Setup<Book>()
                         .ForCollection(books)
@@ -240,8 +238,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     await bulk.Setup<Book>()
                         .ForCollection(books)
@@ -280,8 +277,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     bulk.Setup<SchemaTest2>()
                         .ForDeleteQuery()
@@ -333,8 +329,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     await bulk.Setup<SchemaTest2>()
                         .ForCollection(col)
@@ -381,8 +376,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
 
                     await bulk.Setup<Book>()
@@ -418,8 +412,7 @@ namespace SqlBulkTools.IntegrationTests
             int insertedRecords = 0;
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     insertedRecords = await bulk.Setup<Book>()
                         .ForObject(new Book() { BestSeller = true, Description = "Greatest dad in the world", Title = "Hello World", ISBN = "1234567", Price = 23.99M })
@@ -449,8 +442,7 @@ namespace SqlBulkTools.IntegrationTests
             int insertedRecords = 0;
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     insertedRecords = await bulk.Setup<Book>()
                         .ForObject(new Book()
@@ -482,8 +474,7 @@ namespace SqlBulkTools.IntegrationTests
             await DeleteAllBooks();
             using (TransactionScope tx = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection con = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection con = new SqlConnection(_connectionString))
                 {
                     var bulk = new BulkOperations();
                     await bulk.Setup<Book>()
@@ -518,8 +509,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection con = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection con = new SqlConnection(_connectionString))
                 {
 
                     Book book = new Book()
@@ -585,8 +575,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
 
                     bulk.Setup<CustomColumnMappingTest>()
@@ -628,8 +617,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
 
                     bulk.Setup<CustomColumnMappingTest>()
@@ -679,8 +667,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     bulk.Setup<CustomColumnMappingTest>()
                         .ForDeleteQuery()
@@ -727,8 +714,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope tx = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     await bulk.Setup<Book>()
                         .ForDeleteQuery()

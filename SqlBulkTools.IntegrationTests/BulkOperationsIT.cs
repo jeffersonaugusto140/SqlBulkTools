@@ -23,12 +23,14 @@ namespace SqlBulkTools.IntegrationTests
         private DataAccess _dataAccess;
         private BookRandomizer _randomizer;
         private List<Book> _bookCollection;
+        private string _connectionString;
 
         [TestInitialize]
         public void Setup()
         {
             _dataAccess = new DataAccess();
             _randomizer = new BookRandomizer();
+            _connectionString = ConfigurationManager.ConnectionStrings["SqlBulkToolsTest"].ConnectionString;
         }
 
         [TestMethod]
@@ -47,8 +49,7 @@ namespace SqlBulkTools.IntegrationTests
 
             using (TransactionScope trans = new TransactionScope())
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                    .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                using (SqlConnection conn = new SqlConnection(_connectionString))
                 {
                     bulk.Setup<CustomIdentityColumnNameTest>()
                         .ForDeleteQuery()
@@ -2253,7 +2254,7 @@ namespace SqlBulkTools.IntegrationTests
                 trans.Complete();
             }
 
-            using (var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+            using (var conn = new SqlConnection(_connectionString))
             using (var command = new SqlCommand("SELECT TOP 1 * FROM [dbo].[TestDataTypes]", conn)
             {
                 CommandType = CommandType.Text

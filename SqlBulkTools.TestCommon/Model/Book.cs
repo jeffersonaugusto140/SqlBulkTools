@@ -28,7 +28,7 @@ namespace SqlBulkTools.TestCommon.Model
 
         [Required]
         [Index]
-        public decimal? Price { get; set; }
+        public decimal Price { get; set; }
 
         public float? TestFloat { get; set; }
 

@@ -9,10 +9,15 @@ namespace SqlBulkTools.IntegrationTests.Data
 {
     public class DataAccess
     {
+        private string _connectionString;
+
+        public DataAccess()
+        {
+            _connectionString = ConfigurationManager.ConnectionStrings["SqlBulkToolsTest"].ConnectionString;
+        }
         public List<Book> GetBookList(string isbn = null)
         {
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+            using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 var books = conn.Sproc()
                     .AddSqlParameter("@Isbn", isbn)
@@ -25,8 +30,7 @@ namespace SqlBulkTools.IntegrationTests.Data
 
         public int GetBookCount()
         {
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+            using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 var bookCount = conn.Sproc()
                     .ExecuteScalar<int>("dbo.GetBookCount");
@@ -36,8 +40,7 @@ namespace SqlBulkTools.IntegrationTests.Data
 
         public List<SchemaTest1> GetSchemaTest1List()
         {
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+            using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 var schemaTestList = conn.Sproc()
                     .AddSqlParameter("@Schema", "dbo")
@@ -50,8 +53,7 @@ namespace SqlBulkTools.IntegrationTests.Data
 
         public List<SchemaTest2> GetSchemaTest2List()
         {
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+            using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 var schemaTestList = conn.Sproc()
                     .AddSqlParameter("@Schema", "AnotherSchema")
@@ -64,8 +66,7 @@ namespace SqlBulkTools.IntegrationTests.Data
 
         public List<CustomColumnMappingTest> GetCustomColumnMappingTests()
         {
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+            using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 var customColumnMappingTests = conn                  
                     .Sproc()
@@ -81,8 +82,7 @@ namespace SqlBulkTools.IntegrationTests.Data
 
         public List<ReservedColumnNameTest> GetReservedColumnNameTests()
         {
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+            using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 var reservedColumnNameTests = conn
                     .Sproc()
@@ -97,7 +97,7 @@ namespace SqlBulkTools.IntegrationTests.Data
         {
             using (
                 SqlConnection conn =
-                    new SqlConnection(ConfigurationManager.ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+                    new SqlConnection(_connectionString))
             {
                 return conn.Sproc()
                     .ExecuteScalar<int>("dbo.GetComplexModelCount");
@@ -106,8 +106,7 @@ namespace SqlBulkTools.IntegrationTests.Data
 
         public void ReseedBookIdentity(int idStart)
         {
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+            using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 conn.Sproc()
                     .AddSqlParameter("@IdStart", idStart)
@@ -117,8 +116,7 @@ namespace SqlBulkTools.IntegrationTests.Data
 
         public List<CustomIdentityColumnNameTest> GetCustomIdentityColumnNameTestList()
         {
-            using (SqlConnection conn = new SqlConnection(ConfigurationManager
-                .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
+            using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 return conn.Sproc()
                     .CustomColumnMapping<CustomIdentityColumnNameTest>(x => x.Id, "ID_COMPANY")
