@@ -1562,12 +1562,13 @@ namespace SqlBulkTools.IntegrationTests
             {
                 bookList.Add(new Book
                 {
-                    Id = i + 5000,
+                    Id = i + 600000,
                     Description = "Some desc",
                     Price = 450.23M,
                     ISBN = "1234567891234"
                 });
             }
+            var rec = bookList.Select(x => x.Id).Distinct().Count() == bookList.Count();
 
             using (TransactionScope trans = new TransactionScope())
             {
@@ -1596,7 +1597,7 @@ namespace SqlBulkTools.IntegrationTests
                 trans.Complete();
             }
 
-            Assert.IsTrue(_dataAccess.GetBookList().First().Id == 5000);
+            Assert.IsTrue(_dataAccess.GetBookList().First().Id == 600000);
         }
 
         [TestMethod]

@@ -375,7 +375,6 @@ namespace SqlBulkTools
 
                 throw;
             }
-
         }
 
         private string GetCommand(SqlConnection connection)
