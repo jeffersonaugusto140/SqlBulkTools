@@ -412,9 +412,6 @@ namespace SqlBulkTools
                     "USING " + Constants.TempTableName + " AS Source " +
                     BulkOperationsHelper.BuildJoinConditionsForInsertOrUpdate(_matchTargetOn.ToArray(),
                         Constants.SourceAlias, Constants.TargetAlias, base._collationColumnDic, _nullableColumnDic) +
-                    //"WHEN MATCHED " + BulkOperationsHelper.BuildPredicateQuery(_matchTargetOn.ToArray(), _updatePredicates, Constants.TargetAlias, base._collationColumnDic) +
-                    //"THEN UPDATE " +
-                    //BulkOperationsHelper.BuildUpdateSet(_columns, Constants.SourceAlias, Constants.TargetAlias, _identityColumn, _excludeFromUpdate, _bulkCopySettings) +
                     GetMatchedTargetCmd() +
                     "WHEN NOT MATCHED BY TARGET THEN " +
                     BulkOperationsHelper.BuildInsertSet(_columns, Constants.SourceAlias, _identityColumn, _bulkCopySettings) +
