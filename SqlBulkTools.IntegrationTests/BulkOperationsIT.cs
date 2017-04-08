@@ -34,6 +34,101 @@ namespace SqlBulkTools.IntegrationTests
         }
 
         [TestMethod]
+        public void SqlBulkTools_BulkInsertOrUpdate_ExcludeAllColumnsFromUpdate()
+        {
+            var bulk = new BulkOperations();
+
+            const int rows = 20;
+
+            BulkDelete(_dataAccess.GetBookList());
+
+            _bookCollection = new List<Book>();
+
+            _bookCollection.AddRange(_randomizer.GetRandomCollection(rows));
+
+            decimal dustyBookPrice = 49.99M;
+            string dustyBookTitle = "Snapchat for Dummies";
+            DateTime dustyBookCreatedAt = DateTime.UtcNow;
+
+            // Stick this book in the middle of the collection.
+            var dustyBook = new Book()
+            {
+                ISBN = "123456789111",
+                Price = dustyBookPrice,
+                Title = dustyBookTitle,
+                CreatedAt = dustyBookCreatedAt
+            };
+
+            Book brandNewBook = null;
+
+            _bookCollection.Add(dustyBook);
+
+            _bookCollection.AddRange(_randomizer.GetRandomCollection(rows));
+
+            using (TransactionScope trans = new TransactionScope())
+            {
+                using (SqlConnection conn = new SqlConnection(_connectionString))
+                {
+                    bulk.Setup<Book>()
+                        .ForCollection(_bookCollection)
+                        .WithTable("dbo.Books")
+                        .AddColumn(x => x.Price)
+                        .AddColumn(x => x.Title)
+                        .AddColumn(x => x.ISBN)
+                        .AddColumn(x => x.CreatedAt)
+                        .BulkInsertOrUpdate()
+                        .MatchTargetOn(x => x.ISBN)
+                        .ExcludeAllColumnsFromUpdate()
+                        .Commit(conn);
+
+                    // Update old record in memory... For test to be successful, this will be ignored from update. 
+                    var dustyBookDetails = _bookCollection.First(x => x.ISBN.Equals("123456789111"));
+
+                    dustyBookDetails.CreatedAt = DateTime.UtcNow;
+                    dustyBookDetails.Title = "Snapchat for Dummies 2: Adult edition";
+                    dustyBookDetails.Price = 69.99M;
+
+                    // Add a new record to existing collection... For test to be successful, this record will be inserted.
+                    brandNewBook = new Book()
+                    {
+                        ISBN = "9827349872398",
+                        Price = 88.88M,
+                        Title = "Elon Musk really is an alien in disguise",
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    _bookCollection.Add(brandNewBook);
+
+                    // Rerun BulkInsertOrUpdate
+                    bulk.Setup<Book>()
+                        .ForCollection(_bookCollection)
+                        .WithTable("dbo.Books")
+                        .AddColumn(x => x.Price)
+                        .AddColumn(x => x.Title)
+                        .AddColumn(x => x.ISBN)
+                        .AddColumn(x => x.CreatedAt)
+                        .BulkInsertOrUpdate()
+                        .MatchTargetOn(x => x.ISBN)
+                        .ExcludeAllColumnsFromUpdate()
+                        .Commit(conn);
+                }
+
+                trans.Complete();
+            }
+
+            var dustyBookInDb = _dataAccess.GetBookList(dustyBook.ISBN).Single();
+            var brandNewBookInDb = _dataAccess.GetBookList(brandNewBook.ISBN).SingleOrDefault();
+
+            // Ensure dustybook hasn't changed
+            Assert.AreEqual(dustyBookPrice, dustyBookInDb.Price);
+            Assert.AreEqual(dustyBookTitle, dustyBookInDb.Title);
+            Assert.IsTrue((dustyBookCreatedAt - dustyBookInDb.CreatedAt) < TimeSpan.FromSeconds(1));
+
+            // Ensure brandNewBook is inserted
+            Assert.IsNotNull(brandNewBookInDb);
+        }
+
+        [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdate_PassesWithCustomIdentityColumn()
         {
             var bulk = new BulkOperations();
@@ -43,7 +138,7 @@ namespace SqlBulkTools.IntegrationTests
             {
                 customIdentityColumnList.Add(new CustomIdentityColumnNameTest
                 {
-                    ColumnA = i.ToString()               
+                    ColumnA = i.ToString()
                 });
             }
 
@@ -220,7 +315,7 @@ namespace SqlBulkTools.IntegrationTests
                         .AddColumn(x => x.Competition)
                         .AddColumn(x => x.MinEstimate.CreationDate, "MinEstimate_CreationDate") // Testing custom column mapping
                         .AddColumn(x => x.MinEstimate.TotalCost)
-                        .AddColumn(x => x.SearchVolume)                                                
+                        .AddColumn(x => x.SearchVolume)
                         .BulkInsert()
                         .SetIdentityColumn(x => x.Id)
                         .Commit(conn);
@@ -594,7 +689,7 @@ namespace SqlBulkTools.IntegrationTests
             // Assert
             Assert.IsTrue(_dataAccess.GetSchemaTest2List().Any());
 
-        }    
+        }
 
         [TestMethod]
         public void SqlBulkTools_WithCustomSchema_WhenWithTableIncludesSchemaName()
@@ -656,7 +751,7 @@ namespace SqlBulkTools.IntegrationTests
                         .AddColumn(x => x.ColumnA)
                         .BulkDelete()
                         .MatchTargetOn(x => x.ColumnA)
-                        .Commit(conn); 
+                        .Commit(conn);
                 }
 
                 trans.Complete();
@@ -718,7 +813,7 @@ namespace SqlBulkTools.IntegrationTests
 
                 }
                 trans.Complete();
-            }           
+            }
 
             using (SqlConnection secondConn = new SqlConnection(ConfigurationManager
                 .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
@@ -1183,7 +1278,7 @@ namespace SqlBulkTools.IntegrationTests
                     books.Add(new Book() { CreatedAt = updatedDate, ModifiedAt = updatedDate, Price = 29.99M, Title = "Trump likes woman", ISBN = "1234567891011" });
 
                     /* CreatedAt is added if record doesn't exist, but 
-                     * if this operation is repeated, it's ignored. */ 
+                     * if this operation is repeated, it's ignored. */
 
                     bulk.Setup<Book>()
                         .ForCollection(books)
@@ -1192,7 +1287,7 @@ namespace SqlBulkTools.IntegrationTests
                         .BulkInsertOrUpdate()
                         .MatchTargetOn(x => x.ISBN)
                         .SetIdentityColumn(x => x.Id)
-                        .ExcludeColumnFromUpdate(x => x.CreatedAt) 
+                        .ExcludeColumnFromUpdate(x => x.CreatedAt)
                         .Commit(conn);
                 }
 

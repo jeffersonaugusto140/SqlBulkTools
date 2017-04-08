@@ -18,8 +18,9 @@ namespace SqlBulkTools
     public class BulkInsertOrUpdate<T> : AbstractOperation<T>, ITransaction
     {
         private bool _deleteWhenNotMatchedFlag;
+        private bool _excludeAllColumnsFromUpdate;
         private readonly HashSet<string> _excludeFromUpdate;
-        private Dictionary<string, bool> _nullableColumnDic;
+        private Dictionary<string, bool> _nullableColumnDic;        
 
         /// <summary>
         /// 
@@ -37,6 +38,7 @@ namespace SqlBulkTools
             base(list, tableName, schema, columns, customColumnMappings, bulkCopySettings, propertyInfoList)
         {
             _deleteWhenNotMatchedFlag = false;
+            _excludeAllColumnsFromUpdate = false;
             _updatePredicates = new List<PredicateCondition>();
             _deletePredicates = new List<PredicateCondition>();
             _parameters = new List<SqlParameter>();
@@ -129,6 +131,26 @@ namespace SqlBulkTools
                                                 "be recognised. Call AddAllColumns() or AddColumn() for this column first.");
             }
             _excludeFromUpdate.Add(propertyName);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Excludes all columns from update. Only inserts will be considered. Use the ExcludeColumnFromUpdate method if you want to
+        /// only exclude specific columns.
+        /// </summary>
+        /// <param name="excludeAllColumns"></param>
+        /// <returns></returns>
+        public BulkInsertOrUpdate<T> ExcludeAllColumnsFromUpdate(bool excludeAllColumns = true)
+        {
+            if (_excludeAllColumnsFromUpdate)
+                throw new SqlBulkToolsException("ExcludeAllColumnsFromUpdate can only be called once");
+
+            if (_updatePredicates.Count > 0)
+                throw new SqlBulkToolsException("Can't combine UpdateWhen and ExcludeAllColumnsFromUpdate. " +
+                    "UpdateWhen predicate will not be evaluated if all columns are being excluded.");
+
+            _excludeAllColumnsFromUpdate = excludeAllColumns;
 
             return this;
         }
@@ -390,9 +412,10 @@ namespace SqlBulkTools
                     "USING " + Constants.TempTableName + " AS Source " +
                     BulkOperationsHelper.BuildJoinConditionsForInsertOrUpdate(_matchTargetOn.ToArray(),
                         Constants.SourceAlias, Constants.TargetAlias, base._collationColumnDic, _nullableColumnDic) +
-                    "WHEN MATCHED " + BulkOperationsHelper.BuildPredicateQuery(_matchTargetOn.ToArray(), _updatePredicates, Constants.TargetAlias, base._collationColumnDic) +
-                    "THEN UPDATE " +
-                    BulkOperationsHelper.BuildUpdateSet(_columns, Constants.SourceAlias, Constants.TargetAlias, _identityColumn, _excludeFromUpdate, _bulkCopySettings) +
+                    //"WHEN MATCHED " + BulkOperationsHelper.BuildPredicateQuery(_matchTargetOn.ToArray(), _updatePredicates, Constants.TargetAlias, base._collationColumnDic) +
+                    //"THEN UPDATE " +
+                    //BulkOperationsHelper.BuildUpdateSet(_columns, Constants.SourceAlias, Constants.TargetAlias, _identityColumn, _excludeFromUpdate, _bulkCopySettings) +
+                    GetMatchedTargetCmd() +
                     "WHEN NOT MATCHED BY TARGET THEN " +
                     BulkOperationsHelper.BuildInsertSet(_columns, Constants.SourceAlias, _identityColumn, _bulkCopySettings) +
                     (_deleteWhenNotMatchedFlag ? " WHEN NOT MATCHED BY SOURCE " + BulkOperationsHelper.BuildPredicateQuery(_matchTargetOn.ToArray(),
@@ -404,6 +427,24 @@ namespace SqlBulkTools
                     "DROP TABLE " + Constants.TempTableName + ";";
 
             return comm;
+        }
+
+        private string GetMatchedTargetCmd()
+        {
+            // If user manually excludes every column, it's effectively the same as calling ExcludeAllColumnsFromUpdate() once.
+            if (_excludeFromUpdate.Count == _columns.Count)
+            {
+                _excludeAllColumnsFromUpdate = true;
+            }
+
+            if (_excludeAllColumnsFromUpdate)
+            {
+                return string.Empty;
+            }
+
+            return "WHEN MATCHED " + BulkOperationsHelper.BuildPredicateQuery(_matchTargetOn.ToArray(), _updatePredicates, Constants.TargetAlias, base._collationColumnDic) +
+                    "THEN UPDATE " +
+                    BulkOperationsHelper.BuildUpdateSet(_columns, Constants.SourceAlias, Constants.TargetAlias, _identityColumn, _excludeFromUpdate, _bulkCopySettings);
         }
 
         private string GetSetIdentityCmd(bool on)
