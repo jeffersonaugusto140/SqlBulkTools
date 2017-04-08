@@ -137,7 +137,7 @@ namespace SqlBulkTools
         /// <param name="connection"></param>
         /// <returns></returns>
         public int Commit(SqlConnection connection)
-        {
+        {            
             int affectedRecords = 0;
             if (!_list.Any())
             {
@@ -155,6 +155,8 @@ namespace SqlBulkTools
 
             if (connection.State == ConnectionState.Closed)
                 connection.Open();
+
+            BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.Delete);
 
             var dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
 
@@ -207,7 +209,7 @@ namespace SqlBulkTools
         /// <param name="connection"></param>
         /// <returns></returns>
         public async Task<int> CommitAsync(SqlConnection connection)
-        {
+        {            
             int affectedRecords = 0;
             if (!_list.Any())
             {
@@ -225,6 +227,8 @@ namespace SqlBulkTools
 
             if (connection.State != ConnectionState.Open)
                 await connection.OpenAsync();
+
+            BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.Delete);
 
             var dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
 

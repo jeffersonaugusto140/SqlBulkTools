@@ -194,7 +194,7 @@ namespace SqlBulkTools
         /// <exception cref="SqlBulkToolsException"></exception>
         /// <exception cref="IdentityException"></exception>
         public int Commit(SqlConnection connection)
-        {
+        {            
             int affectedRows = 0;
             if (!_list.Any())
             {
@@ -217,6 +217,8 @@ namespace SqlBulkTools
 
             if (connection.State != ConnectionState.Open)
                 connection.Open();
+
+            BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.InsertOrUpdate);
 
             var dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
 
@@ -291,7 +293,7 @@ namespace SqlBulkTools
         /// <exception cref="SqlBulkToolsException"></exception>
         /// <exception cref="IdentityException"></exception>
         public async Task<int> CommitAsync(SqlConnection connection)
-        {
+        {          
             int affectedRows = 0;
             if (!_list.Any())
             {
@@ -314,6 +316,8 @@ namespace SqlBulkTools
 
             if (connection.State != ConnectionState.Open)
                 await connection.OpenAsync();
+
+            BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.InsertOrUpdate);
 
             var dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
 

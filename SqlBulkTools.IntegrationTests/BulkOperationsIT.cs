@@ -1182,14 +1182,17 @@ namespace SqlBulkTools.IntegrationTests
                     // Insert a random record
                     books.Add(new Book() { CreatedAt = updatedDate, ModifiedAt = updatedDate, Price = 29.99M, Title = "Trump likes woman", ISBN = "1234567891011" });
 
+                    /* CreatedAt is added if record doesn't exist, but 
+                     * if this operation is repeated, it's ignored. */ 
+
                     bulk.Setup<Book>()
                         .ForCollection(books)
                         .WithTable("Books")
-                        .AddAllColumns() // Both ModifiedAt and CreatedAt are added implicitly here
+                        .AddAllColumns()
                         .BulkInsertOrUpdate()
                         .MatchTargetOn(x => x.ISBN)
                         .SetIdentityColumn(x => x.Id)
-                        .ExcludeColumnFromUpdate(x => x.CreatedAt) // Insert or update with new dates but ignore created date. 
+                        .ExcludeColumnFromUpdate(x => x.CreatedAt) 
                         .Commit(conn);
                 }
 

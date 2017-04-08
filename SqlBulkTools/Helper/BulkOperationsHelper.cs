@@ -22,6 +22,38 @@ namespace SqlBulkTools
 {
     internal static class BulkOperationsHelper
     {
+        /// <summary>
+        /// SQLServer version must be >= 2008 for most operations.
+        /// </summary>
+        /// <param name="conn"></param>
+        /// <param name="operationType"></param>
+        internal static void ValidateMsSqlVersion(SqlConnection conn, OperationType operationType)
+        {
+            string serverVersion = conn.ServerVersion;
+            string[] serverVersionDetails = serverVersion?.Split(new string[] { "." }, StringSplitOptions.None);
+
+            if (serverVersionDetails == null)
+                return;
+
+            int versionNumber;
+
+            if (int.TryParse(serverVersionDetails[0], out versionNumber))
+            {
+                switch (versionNumber)
+                {
+                    // SQL Server 2000
+                    case 8:
+                        throw new SqlBulkToolsException("SqlBulkTools is not supported for SQL Server 2000. Recommended version is SQL Server 2008.");
+                    
+                    // SQL Server 2005
+                    case 9:
+                        if (operationType != OperationType.Insert)
+                            throw new SqlBulkToolsException("This operation is not supported in SQL Server 2005. Minimum supported version is SQL Server 2008.");
+                        break;
+                }
+            }
+        }
+
         internal static Table GetTableAndSchema(string tableName)
         {
             StringBuilder sb = new StringBuilder(tableName.Trim());
@@ -409,8 +441,8 @@ namespace SqlBulkTools
             {
                 if ((column != identityColumn || identityColumn == null) && !excludeFromUpdate.Contains(column))
                 {
-                    
-                    if (column == identityColumn && _bulkCopySettings != null 
+
+                    if (column == identityColumn && _bulkCopySettings != null
                         && _bulkCopySettings.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity))
                         continue;
 
@@ -465,9 +497,9 @@ namespace SqlBulkTools
 
             foreach (var column in columns.ToList().OrderBy(x => x))
             {
-                if ((column != Constants.InternalId && column != identityColumn) || 
-                    column == identityColumn 
-                    && bulkCopySettings != null 
+                if ((column != Constants.InternalId && column != identityColumn) ||
+                    column == identityColumn
+                    && bulkCopySettings != null
                     && bulkCopySettings.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity))
                 {
                     insertColumns.Add($"[{column}]");
@@ -550,11 +582,11 @@ namespace SqlBulkTools
             {
                 memberExpr =
                     ((UnaryExpression)lambda.Body).Operand as MemberExpression;
-                
 
-                if (memberExpr?.Expression.Type.GetCustomAttribute(typeof(ComplexTypeAttribute)) != null 
+
+                if (memberExpr?.Expression.Type.GetCustomAttribute(typeof(ComplexTypeAttribute)) != null
                     && memberExpr.Expression is MemberExpression)
-                {                   
+                {
                     return $"{((MemberExpression)memberExpr.Expression).Member.Name}_{memberExpr.Member.Name}";
                 }
             }
@@ -575,11 +607,11 @@ namespace SqlBulkTools
             if (columns == null)
                 return null;
 
-            var outputIdentityCol = outputIdentity.HasValue && 
+            var outputIdentityCol = outputIdentity.HasValue &&
                 outputIdentity.Value == ColumnDirectionType.InputOutput;
 
             DataTable dataTable = new DataTable(typeof(T).Name);
-            
+
             if (matchOnColumns != null)
             {
                 columns = CheckForAdditionalColumns(columns, matchOnColumns);
@@ -639,7 +671,7 @@ namespace SqlBulkTools
             return dataTable;
         }
 
-        internal static void AddPropertyToDataTable(PropertyInfo property, Dictionary<string, string> columnMappings, 
+        internal static void AddPropertyToDataTable(PropertyInfo property, Dictionary<string, string> columnMappings,
             DataTable dataTable, Dictionary<string, int> ordinalDic, HashSet<string> columns, bool isComplex, string basePropertyName)
         {
             var propertyName = isComplex ? $"{basePropertyName}_{property.Name}" : property.Name;
@@ -667,7 +699,7 @@ namespace SqlBulkTools
         public static DataTable ConvertListToDataTable<T>(List<PropertyInfo> propertyInfoList, DataTable dataTable, IEnumerable<T> list, HashSet<string> columns, Dictionary<string, int> ordinalDic,
             Dictionary<int, T> outputIdentityDic = null)
         {
-            Dictionary<PropertyInfo, Attribute> propertyCustomAttributeDictionary 
+            Dictionary<PropertyInfo, Attribute> propertyCustomAttributeDictionary
                 = propertyInfoList.ToDictionary(pi => pi, pi => pi.PropertyType.GetCustomAttribute(typeof(ComplexTypeAttribute)));
 
             int internalIdCounter = 0;
@@ -706,7 +738,7 @@ namespace SqlBulkTools
                             values[ordinal] = internalIdCounter;
                             outputIdentityDic?.Add(internalIdCounter, item);
                         }
-                        
+
                     }
                 }
 
@@ -716,7 +748,7 @@ namespace SqlBulkTools
             return dataTable;
         }
 
-        internal static void AddToDataTable<T>(PropertyInfo property, string column, T item, Dictionary<string, int> ordinalDic, 
+        internal static void AddToDataTable<T>(PropertyInfo property, string column, T item, Dictionary<string, int> ordinalDic,
             object[] values, string basePropertyName, bool isComplex)
         {
             var propertyName = isComplex ? $"{basePropertyName}_{property.Name}" : property.Name;
@@ -735,7 +767,7 @@ namespace SqlBulkTools
                     else
                     {
                         values[ordinal] = property.GetValue(item, null);
-                    }                    
+                    }
                 }
             }
         }
@@ -1062,7 +1094,7 @@ namespace SqlBulkTools
             if (dtCols.Rows.Count == 0)
                 throw new SqlBulkToolsException($"Table name '{tableName}' not found. Check your setup and try again.");
             return dtCols;
-        }       
+        }
 
         internal static void InsertToTmpTable(SqlConnection conn, DataTable dt, BulkCopySettings bulkCopySettings)
         {
@@ -1076,7 +1108,7 @@ namespace SqlBulkTools
                 {
                     bulkcopy.ColumnMappings.Add(column.ToString(), column.ToString());
                 }
-               
+
                 bulkcopy.WriteToServer(dt);
             }
         }
@@ -1176,7 +1208,7 @@ namespace SqlBulkTools
                     while (reader.Read())
                     {
                         T item;
-  
+
                         if (outputIdentityDic.TryGetValue(reader.GetInt32(0), out item))
                         {
                             identityProperty.SetValue(item, reader.GetInt32(1), null);
