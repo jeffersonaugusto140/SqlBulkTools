@@ -40,6 +40,7 @@ namespace SqlBulkTools.IntegrationTests
 
             const int rows = 20;
 
+            // Clean up existing records in Books table.
             BulkDelete(_dataAccess.GetBookList());
 
             _bookCollection = new List<Book>();
@@ -57,13 +58,13 @@ namespace SqlBulkTools.IntegrationTests
                 Price = dustyBookPrice,
                 Title = dustyBookTitle,
                 CreatedAt = dustyBookCreatedAt
-            };
-
-            Book brandNewBook = null;
+            };           
 
             _bookCollection.Add(dustyBook);
 
             _bookCollection.AddRange(_randomizer.GetRandomCollection(rows));
+
+            Book brandNewBook = null;
 
             using (TransactionScope trans = new TransactionScope())
             {

@@ -302,8 +302,7 @@ namespace SqlBulkTools
                 }
 
                 throw;
-            }
-
+            }           
         }
 
         /// <summary>
