@@ -54,6 +54,8 @@
     <Compile Include="BulkOperations\AbstractOperation.cs" />
     <Compile Include="BulkOperations\BulkCopyOptions.cs" />
     <Compile Include="Core\BulkOperationsUtility.cs" />
+    <Compile Include="Core\PrecisionType.cs" />
+    <Compile Include="Core\SchemaDetail.cs" />
     <Compile Include="Core\Table.cs" />
     <Compile Include="Core\TempTableSetup.cs" />
     <Compile Include="Enumeration\BulkInsertStrategyType.cs" />

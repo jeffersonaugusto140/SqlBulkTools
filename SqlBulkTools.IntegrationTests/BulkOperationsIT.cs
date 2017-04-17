@@ -465,7 +465,7 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkUpdate()
         {
-            const int rows = 500;
+            const int rows = 1000;
 
             var fixture = new Fixture();
             fixture.Customizations.Add(new PriceBuilder());
@@ -2300,6 +2300,7 @@ namespace SqlBulkTools.IntegrationTests
             BulkOperations bulk = new BulkOperations();
             List<TestDataType> dataTypeTest = new List<TestDataType>()
             {
+                
                 new TestDataType()
                 {
                     BigIntTest = 342324324324324324,

@@ -120,10 +120,11 @@ namespace SqlBulkTools
                 // If InputOutput identity is selected, must use staging table.
                 if (_outputIdentity == ColumnDirectionType.InputOutput && dtCols != null)
                 {
-                    command.CommandText = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
+                    var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
+                    command.CommandText = schemaDetail.BuildCreateTableQuery;
                     command.ExecuteNonQuery();
 
-                    BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings, _columns, _identityColumn, _ordinalDic);
+                    BulkOperationsHelper.InsertToTmpTableWithBulkCopy(connection, dt, _bulkCopySettings);
 
                     command.CommandText = BulkOperationsHelper.GetInsertIntoStagingTableCmd(command, connection, _schema, _tableName,
                         _columns, _identityColumn, _outputIdentity);
@@ -200,10 +201,11 @@ namespace SqlBulkTools
                 // If InputOutput identity is selected, must use staging table.
                 if (_outputIdentity == ColumnDirectionType.InputOutput && dtCols != null)
                 {
-                    command.CommandText = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
+                    var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
+                    command.CommandText = schemaDetail.BuildCreateTableQuery;
                     await command.ExecuteNonQueryAsync();
 
-                    BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings, _columns, _identityColumn, _ordinalDic);
+                    BulkOperationsHelper.InsertToTmpTableWithBulkCopy(connection, dt, _bulkCopySettings);
 
                     command.CommandText = BulkOperationsHelper.GetInsertIntoStagingTableCmd(command, connection, _schema, _tableName,
                         _columns, _identityColumn, _outputIdentity);

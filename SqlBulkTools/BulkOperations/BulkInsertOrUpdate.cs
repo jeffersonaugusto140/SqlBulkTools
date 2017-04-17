@@ -251,16 +251,26 @@ namespace SqlBulkTools
                 command.Connection = connection;
                 command.CommandTimeout = _sqlTimeout;
 
-
-
-                _nullableColumnDic = BulkOperationsHelper.GetNullableColumnDic(dtCols);
-
                 //Creating temp table on database
-                command.CommandText = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
+                var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
+                command.CommandText = schemaDetail.BuildCreateTableQuery;
 
                 command.ExecuteNonQuery();
 
-                BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings, _columns, _identityColumn, _ordinalDic);
+                _nullableColumnDic = schemaDetail.NullableDic;
+
+                if (BulkOperationsHelper.GetBulkInsertStrategyType(dt, _columns) ==
+                    BulkInsertStrategyType.MultiValueInsert)
+                {
+
+                    var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(dt, _identityColumn, _columns,
+                        _ordinalDic, _bulkCopySettings, schemaDetail);
+                    command.CommandText = tempTableSetup.InsertQuery;
+                    command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
+                    command.ExecuteNonQuery();
+                }
+                else
+                    BulkOperationsHelper.InsertToTmpTableWithBulkCopy(connection, dt, _bulkCopySettings);
 
                 string comm = BulkOperationsHelper.GetOutputCreateTableCmd(_outputIdentity, Constants.TempOutputTableName,
                 OperationType.InsertOrUpdate, _identityColumn);
@@ -353,13 +363,25 @@ namespace SqlBulkTools
                 command.Connection = connection;
                 command.CommandTimeout = _sqlTimeout;
 
-                _nullableColumnDic = BulkOperationsHelper.GetNullableColumnDic(dtCols);
-
                 //Creating temp table on database
-                command.CommandText = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
+                var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
+                command.CommandText = schemaDetail.BuildCreateTableQuery;
                 await command.ExecuteNonQueryAsync();
 
-                BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings, _columns, _identityColumn, _ordinalDic);
+                _nullableColumnDic = schemaDetail.NullableDic;
+
+                if (BulkOperationsHelper.GetBulkInsertStrategyType(dt, _columns) ==
+                    BulkInsertStrategyType.MultiValueInsert)
+                {
+
+                    var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(dt, _identityColumn, _columns,
+                        _ordinalDic, _bulkCopySettings, schemaDetail);
+                    command.CommandText = tempTableSetup.InsertQuery;
+                    command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
+                    await command.ExecuteNonQueryAsync();
+                }
+                else
+                    await BulkOperationsHelper.InsertToTmpTableWithBulkCopyAsync(connection, dt, _bulkCopySettings);
 
                 string comm = BulkOperationsHelper.GetOutputCreateTableCmd(_outputIdentity, Constants.TempOutputTableName,
                 OperationType.InsertOrUpdate, _identityColumn);

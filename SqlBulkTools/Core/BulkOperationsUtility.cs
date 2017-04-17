@@ -11,7 +11,7 @@ namespace SqlBulkTools.Core
     public static class BulkOperationsUtility
     {
 
-        private static readonly Dictionary<Type, DbType> TypeMappings = new Dictionary<Type, DbType>()
+        private static readonly Dictionary<Type, DbType> DbTypeMappings = new Dictionary<Type, DbType>()
         {
             { typeof(byte), DbType.Byte},
             { typeof(sbyte), DbType.Int16},
@@ -53,6 +53,37 @@ namespace SqlBulkTools.Core
             { typeof(TimeSpan?), DbType.Time },
         };
 
+        private static readonly Dictionary<Type, SqlDbType> SqlDbMappings = new Dictionary<Type, SqlDbType>()
+        {
+
+                {typeof (Boolean), SqlDbType.Bit},
+                {typeof (Boolean?), SqlDbType.Bit},
+                {typeof (Byte), SqlDbType.TinyInt},
+                {typeof (Byte?), SqlDbType.TinyInt},
+                {typeof (String), SqlDbType.NVarChar},
+                {typeof (DateTime), SqlDbType.DateTime},
+                {typeof (DateTime?), SqlDbType.DateTime},
+                {typeof (Int16), SqlDbType.SmallInt},
+                {typeof (Int16?), SqlDbType.SmallInt},
+                {typeof (Int32), SqlDbType.Int},
+                {typeof (Int32?), SqlDbType.Int},
+                {typeof (Int64), SqlDbType.BigInt},
+                {typeof (Int64?), SqlDbType.BigInt},
+                {typeof (Decimal), SqlDbType.Decimal},
+                {typeof (Decimal?), SqlDbType.Decimal},
+                {typeof (Double), SqlDbType.Float},
+                {typeof (Double?), SqlDbType.Float},
+                {typeof (Single), SqlDbType.Real},
+                {typeof (Single?), SqlDbType.Real},
+                {typeof (TimeSpan), SqlDbType.Time},
+                {typeof (Guid), SqlDbType.UniqueIdentifier},
+                {typeof (Guid?), SqlDbType.UniqueIdentifier},
+                {typeof (Byte[]), SqlDbType.Binary},
+                {typeof (Byte?[]), SqlDbType.Binary},
+                {typeof (Char[]), SqlDbType.Char},
+                {typeof (Char?[]), SqlDbType.Char}
+        };
+
         /// <summary>
         /// 
         /// </summary>
@@ -63,7 +94,7 @@ namespace SqlBulkTools.Core
         {
             DbType dbType;
 
-            if (TypeMappings.TryGetValue(type, out dbType))
+            if (DbTypeMappings.TryGetValue(type, out dbType))
             {
                 return dbType;
             }

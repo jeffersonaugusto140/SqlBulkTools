@@ -93,27 +93,32 @@ namespace SqlBulkTools
             if (customColumnMappings.TryGetValue(propertyName, out actualPropertyName))
                 return actualPropertyName;
 
-            else
                 return propertyName;
         }
 
-        internal struct PrecisionType
-        {
-            public string NumericPrecision { get; set; }
-            public string NumericScale { get; set; }
-        }
 
-        internal static string BuildCreateTempTable(HashSet<string> columns, DataTable schema, ColumnDirectionType outputIdentity)
+        internal static SchemaDetail BuildCreateTempTable(HashSet<string> columns, DataTable schema, ColumnDirectionType outputIdentity)
         {
+            SchemaDetail schemaDetail = new SchemaDetail
+            {
+                DateTimeTypePrecisionDic = new Dictionary<string, string>(),
+                MaxCharDic = new Dictionary<string, string>(),
+                NumericPrecisionTypeDic = new Dictionary<string, PrecisionType>(),
+                NullableDic = new Dictionary<string, bool>()
+            };
             Dictionary<string, string> actualColumns = new Dictionary<string, string>();
-            Dictionary<string, string> actualColumnsMaxCharLength = new Dictionary<string, string>();
-            Dictionary<string, PrecisionType> actualColumnsNumericPrecision = new Dictionary<string, PrecisionType>();
-            Dictionary<string, string> actualColumnsDateTimePrecision = new Dictionary<string, string>();
+            //Dictionary<string, string> actualColumnsMaxCharLength = new Dictionary<string, string>();
+            //Dictionary<string, PrecisionType> actualColumnsNumericPrecision = new Dictionary<string, PrecisionType>();
+            //Dictionary<string, string> actualColumnsDateTimePrecision = new Dictionary<string, string>();
 
             foreach (DataRow row in schema.Rows)
             {
                 string columnType = row["DATA_TYPE"].ToString();
                 string columnName = row["COLUMN_NAME"].ToString();
+                bool isColumnNullable = row["IS_NULLABLE"].ToString()
+                    .Equals("YES", StringComparison.OrdinalIgnoreCase);
+
+                schemaDetail.NullableDic.Add(row["COLUMN_NAME"].ToString(), isColumnNullable);
 
                 actualColumns.Add(row["COLUMN_NAME"].ToString(), row["DATA_TYPE"].ToString());
 
@@ -122,13 +127,13 @@ namespace SqlBulkTools
                     columnType == "varbinary" || columnType == "nchar")
 
                 {
-                    actualColumnsMaxCharLength.Add(row["COLUMN_NAME"].ToString(),
+                    schemaDetail.MaxCharDic.Add(row["COLUMN_NAME"].ToString(),
                         row["CHARACTER_MAXIMUM_LENGTH"].ToString());
                 }
 
                 if (columnType == "datetime2" || columnType == "time")
                 {
-                    actualColumnsDateTimePrecision.Add(row["COLUMN_NAME"].ToString(), row["DATETIME_PRECISION"].ToString());
+                    schemaDetail.DateTimeTypePrecisionDic.Add(row["COLUMN_NAME"].ToString(), row["DATETIME_PRECISION"].ToString());
                 }
 
                 if (columnType == "numeric" || columnType == "decimal")
@@ -138,7 +143,7 @@ namespace SqlBulkTools
                         NumericPrecision = row["NUMERIC_PRECISION"].ToString(),
                         NumericScale = row["NUMERIC_SCALE"].ToString()
                     };
-                    actualColumnsNumericPrecision.Add(columnName, p);
+                    schemaDetail.NumericPrecisionTypeDic.Add(columnName, p);
                 }
 
             }
@@ -156,9 +161,9 @@ namespace SqlBulkTools
                 string columnType;
                 if (actualColumns.TryGetValue(column, out columnType))
                 {
-                    columnType = GetVariableCharType(column, columnType, actualColumnsMaxCharLength);
-                    columnType = GetDecimalPrecisionAndScaleType(column, columnType, actualColumnsNumericPrecision);
-                    columnType = GetDateTimePrecisionType(column, columnType, actualColumnsDateTimePrecision);
+                    columnType = GetVariableCharType(column, columnType, schemaDetail.MaxCharDic);
+                    columnType = GetDecimalPrecisionAndScaleType(column, columnType, schemaDetail.NumericPrecisionTypeDic);
+                    columnType = GetDateTimePrecisionType(column, columnType, schemaDetail.DateTimeTypePrecisionDic);
                 }
 
                 paramList.Add($"[{column}] {columnType}");
@@ -174,23 +179,8 @@ namespace SqlBulkTools
             }
             command.Append(");");
 
-            return command.ToString();
-        }
-
-        internal static Dictionary<string, bool> GetNullableColumnDic(DataTable schema)
-        {
-            Dictionary<string, bool> nullableDic = new Dictionary<string, bool>();
-
-            foreach (DataRow row in schema.Rows)
-            {
-
-                bool isColumnNullable = row["IS_NULLABLE"].ToString()
-                    .Equals("YES", StringComparison.OrdinalIgnoreCase);
-
-                nullableDic.Add(row["COLUMN_NAME"].ToString(), isColumnNullable);
-            }
-
-            return nullableDic;
+            schemaDetail.BuildCreateTableQuery = command.ToString();
+            return schemaDetail;
         }
 
         private static string GetVariableCharType(string column, string columnType, Dictionary<string, string> actualColumnsMaxCharLength)
@@ -558,8 +548,8 @@ namespace SqlBulkTools
             return BulkInsertStrategyType.BulkCopy;
         }
 
-        internal static TempTableSetup BuildValueSetFromDataTable(DataTable dt, string identityColumn, HashSet<string> columns, 
-            Dictionary<string, int> ordinalDic, BulkCopySettings bulkCopySettings)
+        internal static TempTableSetup BuildInsertQueryFromDataTable(DataTable dt, string identityColumn, HashSet<string> columns, 
+            Dictionary<string, int> ordinalDic, BulkCopySettings bulkCopySettings, SchemaDetail schemaDetail)
         {
             TempTableSetup tbl = new TempTableSetup();
             StringBuilder command = new StringBuilder();
@@ -577,7 +567,7 @@ namespace SqlBulkTools
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 command.Append("(");
-                foreach (var column in columns)
+                foreach (var column in columns.OrderBy(x => x))
                 {
                     currentCol++;
 
@@ -589,7 +579,53 @@ namespace SqlBulkTools
                             var colValue = dt.Rows[i][ordinal];
                             string paramName = $"@{column}{i + 1}";
 
-                            sqlParamList.Add(new SqlParameter(paramName, colValue));
+                            PrecisionType precisionType;
+                            bool isColumnNullable;
+                            string strLength;
+
+                            schemaDetail.NullableDic.TryGetValue(column, out isColumnNullable);
+
+                            if (schemaDetail.NumericPrecisionTypeDic.TryGetValue(column, out precisionType))
+                            {
+                                sqlParamList.Add(new SqlParameter(paramName, colValue)
+                                {
+                                    Precision = byte.Parse(precisionType.NumericPrecision),
+                                    Scale = byte.Parse(precisionType.NumericScale),
+                                    IsNullable = isColumnNullable
+                                });
+                            }
+                            else if (schemaDetail.MaxCharDic.TryGetValue(column, out strLength))
+                            {
+                                sqlParamList.Add(new SqlParameter(paramName, colValue)
+                                {
+                                    Size = int.Parse(strLength),
+                                    IsNullable = isColumnNullable
+                                });
+                            }
+                            else if (colValue is SqlGeometry)
+                            {
+                                sqlParamList.Add(new SqlParameter(paramName, colValue)
+                                {
+                                    IsNullable = isColumnNullable,
+                                    UdtTypeName = "geometry"
+                                });
+                            }
+                            else if (colValue is SqlGeography)
+                            {
+                                sqlParamList.Add(new SqlParameter(paramName, colValue)
+                                {
+                                    IsNullable = isColumnNullable,
+                                    UdtTypeName = "geography"
+                                });
+                            }
+                            else
+                            {
+                                sqlParamList.Add(new SqlParameter(paramName, colValue)
+                                {
+                                    IsNullable = isColumnNullable
+                                });
+                            }
+                            
                             command.Append(paramName);
 
                             if (currentCol != totalCols)
@@ -1141,8 +1177,7 @@ namespace SqlBulkTools
             return dtCols;
         }
 
-        internal static void InsertToTmpTable(SqlConnection conn, DataTable dt, BulkCopySettings bulkCopySettings,
-            HashSet<string> columns, string identityColumn, Dictionary<string, int> ordinalDic)
+        internal static void InsertToTmpTableWithBulkCopy(SqlConnection conn, DataTable dt, BulkCopySettings bulkCopySettings)
         {
             using (SqlBulkCopy bulkcopy = new SqlBulkCopy(conn, bulkCopySettings.SqlBulkCopyOptions, null))
             {
@@ -1159,13 +1194,18 @@ namespace SqlBulkTools
             }
         }
 
-        internal static async Task InsertToTmpTableAsync(SqlConnection conn, SqlTransaction transaction, DataTable dt, BulkCopySettings bulkCopySettings)
+        internal static async Task InsertToTmpTableWithBulkCopyAsync(SqlConnection conn, DataTable dt, BulkCopySettings bulkCopySettings)
         {
-            using (SqlBulkCopy bulkcopy = new SqlBulkCopy(conn, bulkCopySettings.SqlBulkCopyOptions, transaction))
+            using (SqlBulkCopy bulkcopy = new SqlBulkCopy(conn, bulkCopySettings.SqlBulkCopyOptions, null))
             {
                 bulkcopy.DestinationTableName = Constants.TempTableName;
 
                 SetSqlBulkCopySettings(bulkcopy, bulkCopySettings);
+
+                foreach (var column in dt.Columns)
+                {
+                    bulkcopy.ColumnMappings.Add(column.ToString(), column.ToString());
+                }
 
                 await bulkcopy.WriteToServerAsync(dt);
             }

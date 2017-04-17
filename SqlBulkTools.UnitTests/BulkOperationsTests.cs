@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Moq;
+using SqlBulkTools.Core;
 using SqlBulkTools.TestCommon.Model;
 using SqlBulkTools.TestCommon;
 
@@ -239,6 +240,13 @@ namespace SqlBulkTools.UnitTests
         [TestMethod]
         public void BulkOperationsHelper_BuildValueSetFromDataTable_WithSingleValue()
         {
+            var schemaDetail = new SchemaDetail()
+            {
+                DateTimeTypePrecisionDic = new Dictionary<string, string>(),
+                MaxCharDic = new Dictionary<string, string>(),
+                NumericPrecisionTypeDic = new Dictionary<string, PrecisionType>(),
+                NullableDic = new Dictionary<string, bool>()
+            };
             var bookList = GetBookList().Where(x => x.Title == "Book1");
             HashSet<string> columns = new HashSet<string>() { "Description", "Id", "ISBN", "Title"  };
             Dictionary<string, int> ordinalDic = new Dictionary<string, int>();
@@ -247,8 +255,9 @@ namespace SqlBulkTools.UnitTests
             var dataTable = BulkOperationsHelper.CreateDataTable<Book>(propertyInfoList, columns, null, ordinalDic);
             BulkOperationsHelper.ConvertListToDataTable(propertyInfoList, dataTable, bookList, columns, ordinalDic);
 
-            var result = BulkOperationsHelper.BuildValueSetFromDataTable(dataTable, "Id", columns, ordinalDic, null);
-            var result2 = BulkOperationsHelper.BuildValueSetFromDataTable(dataTable, "Id", columns, ordinalDic, new BulkCopySettings(){SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity});
+            var result = BulkOperationsHelper.BuildInsertQueryFromDataTable(dataTable, "Id", columns, ordinalDic, null, schemaDetail);
+            var result2 = BulkOperationsHelper.BuildInsertQueryFromDataTable(dataTable, "Id", columns, ordinalDic, 
+                new BulkCopySettings(){SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity}, schemaDetail);
 
             Assert.AreEqual("INSERT INTO #TmpTable ([Description], [ISBN], [Title]) VALUES (@Description1, @ISBN1, @Title1)", result.InsertQuery);
             Assert.AreEqual("INSERT INTO #TmpTable ([Description], [Id], [ISBN], [Title]) VALUES (@Description1, @Id1, @ISBN1, @Title1)", result2.InsertQuery);
@@ -257,6 +266,13 @@ namespace SqlBulkTools.UnitTests
         [TestMethod]
         public void BulkOperationsHelper_BuildValueSetFromDataTable_WithMultipleValues()
         {
+            var schemaDetail = new SchemaDetail()
+            {
+                DateTimeTypePrecisionDic = new Dictionary<string, string>(),
+                MaxCharDic = new Dictionary<string, string>(),
+                NumericPrecisionTypeDic = new Dictionary<string, PrecisionType>(),
+                NullableDic = new Dictionary<string, bool>()
+            };
             var bookList = GetBookList();
             HashSet<string> columns = new HashSet<string>() { "Description", "Id", "ISBN", "Title" };
             Dictionary<string, int> ordinalDic = new Dictionary<string, int>();
@@ -265,8 +281,9 @@ namespace SqlBulkTools.UnitTests
             var dataTable = BulkOperationsHelper.CreateDataTable<Book>(propertyInfoList, columns, null, ordinalDic);
             BulkOperationsHelper.ConvertListToDataTable(propertyInfoList, dataTable, bookList, columns, ordinalDic);
 
-            var result = BulkOperationsHelper.BuildValueSetFromDataTable(dataTable, "Id", columns, ordinalDic, null);
-            var result2 = BulkOperationsHelper.BuildValueSetFromDataTable(dataTable, "Id", columns, ordinalDic, new BulkCopySettings() { SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity });
+            var result = BulkOperationsHelper.BuildInsertQueryFromDataTable(dataTable, "Id", columns, ordinalDic, null, schemaDetail);
+            var result2 = BulkOperationsHelper.BuildInsertQueryFromDataTable(dataTable, "Id", columns, ordinalDic,
+                new BulkCopySettings() { SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity }, schemaDetail);
 
             Assert.AreEqual("INSERT INTO #TmpTable ([Description], [ISBN], [Title]) VALUES (@Description1, @ISBN1, @Title1), " +
                             "(@Description2, @ISBN2, @Title2), (@Description3, @ISBN3, @Title3)", result.InsertQuery);

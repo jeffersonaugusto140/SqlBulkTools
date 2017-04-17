@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Data.SqlClient;
-using SqlBulkTools.Enumeration;
 
 namespace SqlBulkTools.Core
 {
