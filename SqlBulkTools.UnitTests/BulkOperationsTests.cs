@@ -157,7 +157,7 @@ namespace SqlBulkTools.UnitTests
         }
 
         [TestMethod]
-        public void BulkOperationsHelpers_BuildInsertSet_BuildsCorrectSequenceForMultipleColumns()
+        public void BulkOperationsHelpers_BuildMergeInsert_BuildsCorrectSequenceForMultipleColumns()
         {
             // Arrange
             var updateOrInsertColumns = GetTestColumns();
@@ -165,7 +165,7 @@ namespace SqlBulkTools.UnitTests
                 "INSERT ([Email], [IsCool], [Name], [Town]) values ([Source].[Email], [Source].[IsCool], [Source].[Name], [Source].[Town])";
 
             // Act
-            var result = BulkOperationsHelper.BuildInsertSet(updateOrInsertColumns, "Source", "id");
+            var result = BulkOperationsHelper.BuildMergeInsert(updateOrInsertColumns, "Source", "id");
 
             // Assert
             Assert.AreEqual(expected, result);
@@ -206,7 +206,7 @@ namespace SqlBulkTools.UnitTests
         }
 
         [TestMethod]
-        public void BulkOperationsHelpers_BuildInsertSet_BuildsCorrectSequenceForSingleColumn()
+        public void BulkOperationsHelpers_BuildMergeInsert_BuildsCorrectSequenceForSingleColumn()
         {
             // Arrange
             var updateOrInsertColumns = new HashSet<string>();
@@ -215,7 +215,7 @@ namespace SqlBulkTools.UnitTests
                 "INSERT ([Id]) values ([Source].[Id])";
 
             // Act
-            var result = BulkOperationsHelper.BuildInsertSet(updateOrInsertColumns, "Source", null);
+            var result = BulkOperationsHelper.BuildMergeInsert(updateOrInsertColumns, "Source", null);
 
             // Assert
             Assert.AreEqual(expected, result);
@@ -597,7 +597,7 @@ namespace SqlBulkTools.UnitTests
             columns.Add("TestColumn");
 
             // Act
-            string result = BulkOperationsHelper.BuildValueSet(columns, "Id");
+            string result = BulkOperationsHelper.BuildValueSetForParameterisedColumns(columns, "Id");
 
             // Assert
             Assert.AreEqual("(@TestColumn)", result);
@@ -612,7 +612,7 @@ namespace SqlBulkTools.UnitTests
             columns.Add("TestColumnB");
 
             // Act
-            string result = BulkOperationsHelper.BuildValueSet(columns, "Id");
+            string result = BulkOperationsHelper.BuildValueSetForParameterisedColumns(columns, "Id");
 
             // Assert
             Assert.AreEqual("(@TestColumnA, @TestColumnB)", result);
@@ -628,7 +628,7 @@ namespace SqlBulkTools.UnitTests
             columns.Add("Id");
 
             // Act
-            string result = BulkOperationsHelper.BuildValueSet(columns, "Id");
+            string result = BulkOperationsHelper.BuildValueSetForParameterisedColumns(columns, "Id");
 
             // Assert
             Assert.AreEqual("(@TestColumnA, @TestColumnB)", result);

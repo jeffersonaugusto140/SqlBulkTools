@@ -251,13 +251,16 @@ namespace SqlBulkTools
                 command.Connection = connection;
                 command.CommandTimeout = _sqlTimeout;
 
+
+
                 _nullableColumnDic = BulkOperationsHelper.GetNullableColumnDic(dtCols);
 
                 //Creating temp table on database
-                command.CommandText = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);            
+                command.CommandText = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
+
                 command.ExecuteNonQuery();
 
-                BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings);
+                BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings, _columns, _identityColumn);
 
                 string comm = BulkOperationsHelper.GetOutputCreateTableCmd(_outputIdentity, Constants.TempOutputTableName,
                 OperationType.InsertOrUpdate, _identityColumn);
@@ -356,7 +359,7 @@ namespace SqlBulkTools
                 command.CommandText = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
                 await command.ExecuteNonQueryAsync();
 
-                BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings);
+                BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings, _columns, _identityColumn);
 
                 string comm = BulkOperationsHelper.GetOutputCreateTableCmd(_outputIdentity, Constants.TempOutputTableName,
                 OperationType.InsertOrUpdate, _identityColumn);
@@ -413,7 +416,7 @@ namespace SqlBulkTools
                         Constants.SourceAlias, Constants.TargetAlias, base._collationColumnDic, _nullableColumnDic) +
                     GetMatchedTargetCmd() +
                     "WHEN NOT MATCHED BY TARGET THEN " +
-                    BulkOperationsHelper.BuildInsertSet(_columns, Constants.SourceAlias, _identityColumn, _bulkCopySettings) +
+                    BulkOperationsHelper.BuildMergeInsert(_columns, Constants.SourceAlias, _identityColumn, _bulkCopySettings) +
                     (_deleteWhenNotMatchedFlag ? " WHEN NOT MATCHED BY SOURCE " + BulkOperationsHelper.BuildPredicateQuery(_matchTargetOn.ToArray(),
                     _deletePredicates, Constants.TargetAlias, base._collationColumnDic) +
                     "THEN DELETE " : " ") +

@@ -335,7 +335,7 @@ namespace SqlBulkTools
                 $"{BulkOperationsHelper.BuildMatchTargetOnList(_matchTargetOn, _collationColumnDic, _customColumnMappings)} " +
                 $"IF (@@ROWCOUNT = 0) BEGIN " +
                 $"{BulkOperationsHelper.BuildInsertIntoSet(_columns, _identityColumn, fullQualifiedTableName)} " +
-                $"VALUES{BulkOperationsHelper.BuildValueSet(_columns, _identityColumn)}" +
+                $"VALUES{BulkOperationsHelper.BuildValueSetForParameterisedColumns(_columns, _identityColumn)}" +
                 $"{(_outputIdentity == ColumnDirectionType.InputOutput ? $" SET @{_identityColumn} = SCOPE_IDENTITY()" : string.Empty)} END";
         }
     }

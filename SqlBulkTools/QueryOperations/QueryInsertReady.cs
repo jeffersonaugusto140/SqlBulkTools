@@ -139,7 +139,7 @@ namespace SqlBulkTools.QueryOperations
                 StringBuilder sb = new StringBuilder();
 
                 sb.Append($"{BulkOperationsHelper.BuildInsertIntoSet(_columns, _identityColumn, fullQualifiedTableName)} " +
-                              $"VALUES{BulkOperationsHelper.BuildValueSet(_columns, _identityColumn)} ");
+                              $"VALUES{BulkOperationsHelper.BuildValueSetForParameterisedColumns(_columns, _identityColumn)} ");
 
                 if (_outputIdentity == ColumnDirectionType.InputOutput)
                 {
@@ -221,7 +221,7 @@ namespace SqlBulkTools.QueryOperations
                 StringBuilder sb = new StringBuilder();
 
                 sb.Append($"{BulkOperationsHelper.BuildInsertIntoSet(_columns, _identityColumn, fullQualifiedTableName)} " +
-                              $"VALUES{BulkOperationsHelper.BuildValueSet(_columns, _identityColumn)} ");
+                              $"VALUES{BulkOperationsHelper.BuildValueSetForParameterisedColumns(_columns, _identityColumn)} ");
 
                 if (_outputIdentity == ColumnDirectionType.InputOutput)
                 {

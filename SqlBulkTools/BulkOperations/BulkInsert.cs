@@ -123,7 +123,7 @@ namespace SqlBulkTools
                     command.CommandText = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
                     command.ExecuteNonQuery();
 
-                    BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings);
+                    BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings, _columns, _identityColumn);
 
                     command.CommandText = BulkOperationsHelper.GetInsertIntoStagingTableCmd(command, connection, _schema, _tableName,
                         _columns, _identityColumn, _outputIdentity);
@@ -203,7 +203,7 @@ namespace SqlBulkTools
                     command.CommandText = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
                     await command.ExecuteNonQueryAsync();
 
-                    BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings);
+                    BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings, _columns, _identityColumn);
 
                     command.CommandText = BulkOperationsHelper.GetInsertIntoStagingTableCmd(command, connection, _schema, _tableName,
                         _columns, _identityColumn, _outputIdentity);
