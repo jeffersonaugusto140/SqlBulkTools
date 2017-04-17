@@ -2295,40 +2295,22 @@ namespace SqlBulkTools.IntegrationTests
             BulkDelete(_dataAccess.GetBookList());
 
             var todaysDate = DateTime.Today;
-            Guid guid = Guid.NewGuid();
 
             BulkOperations bulk = new BulkOperations();
-            List<TestDataType> dataTypeTest = new List<TestDataType>()
+
+            List<TestDataType> dataTypeTestSmallCol = new List<TestDataType>(); // Uses values list strategy for insert
+
+            for (int i = 0; i < 3; i++)
             {
-                
-                new TestDataType()
-                {
-                    BigIntTest = 342324324324324324,
-                    TinyIntTest = 126,
-                    DateTimeTest = todaysDate,
-                    DateTime2Test = new DateTime(2008, 12, 12, 10, 20, 30),
-                    DateTest = new DateTime(2007, 7, 5, 20, 30, 10),
-                    TimeTest = new TimeSpan(23, 32, 23),
-                    SmallDateTimeTest = new DateTime(2005, 7, 14),
-                    BinaryTest = new byte[] {0, 3, 3, 2, 4, 3},
-                    VarBinaryTest = new byte[] {3, 23, 33, 243},
-                    DecimalTest = 178.43M,
-                    MoneyTest = 24333.99M,
-                    SmallMoneyTest = 103.32M,
-                    RealTest = 32.53F,
-                    NumericTest = 154343.3434342M,
-                    FloatTest = 232.43F,
-                    FloatTest2 = 43243.34,
-                    TextTest = "This is some text.",
-                    GuidTest = guid,
-                    CharTest = "Some",
-                    XmlTest = "<title>The best SQL Bulk tool</title>",
-                    NCharTest = "SomeText",
-                    ImageTest = new byte[] {3,3,32,4},
-                    TestSqlGeometry = SqlGeometry.Point(-2.74612, 53.881238, 4326),
-                    TestSqlGeography = SqlGeography.Point(-5, 43.432, 4326)
-                }
-            };
+                dataTypeTestSmallCol.Add(GetTestDataType(todaysDate));
+            }
+
+            List<TestDataType> dataTypeTestLargerCol = new List<TestDataType>(); // Uses BulkCopy strategy
+
+            for (int i = 0; i < 50; i++)
+            {
+                dataTypeTestLargerCol.Add(GetTestDataType(todaysDate));
+            }
 
             using (TransactionScope trans = new TransactionScope())
             {
@@ -2343,7 +2325,15 @@ namespace SqlBulkTools.IntegrationTests
                         .Commit(conn);
 
                     bulk.Setup<TestDataType>()
-                        .ForCollection(dataTypeTest)
+                        .ForCollection(dataTypeTestSmallCol)
+                        .WithTable("TestDataTypes")
+                        .AddAllColumns()
+                        .BulkInsertOrUpdate()
+                        .MatchTargetOn(x => x.GuidTest)
+                        .Commit(conn);
+
+                    bulk.Setup<TestDataType>()
+                        .ForCollection(dataTypeTestLargerCol)
                         .WithTable("TestDataTypes")
                         .AddAllColumns()
                         .BulkInsertOrUpdate()
@@ -2378,7 +2368,6 @@ namespace SqlBulkTools.IntegrationTests
                         Assert.AreEqual(new DateTime(2005, 7, 14), reader["SmallDateTimeTest"]);
                         Assert.AreEqual(new DateTime(2007, 7, 5), reader["DateTest"]);
                         Assert.AreEqual(new TimeSpan(23, 32, 23), reader["TimeTest"]);
-                        Assert.AreEqual(guid, reader["GuidTest"]);
                         Assert.AreEqual("This is some text.", reader["TextTest"]);
                         Assert.AreEqual("Some", reader["CharTest"].ToString().Trim());
                         Assert.AreEqual(126, (byte)reader["TinyIntTest"], "Testing TinyIntTest");
@@ -2393,6 +2382,39 @@ namespace SqlBulkTools.IntegrationTests
                     }
                 }
             }
+        }
+
+        private TestDataType GetTestDataType(DateTime todaysDate)
+        {
+            var dataTypeTestRecord = new TestDataType()
+            {
+                BigIntTest = 342324324324324324,
+                TinyIntTest = 126,
+                DateTimeTest = todaysDate,
+                DateTime2Test = new DateTime(2008, 12, 12, 10, 20, 30),
+                DateTest = new DateTime(2007, 7, 5, 20, 30, 10),
+                TimeTest = new TimeSpan(23, 32, 23),
+                SmallDateTimeTest = new DateTime(2005, 7, 14),
+                BinaryTest = new byte[] { 0, 3, 3, 2, 4, 3 },
+                VarBinaryTest = new byte[] { 3, 23, 33, 243 },
+                DecimalTest = 178.43M,
+                MoneyTest = 24333.99M,
+                SmallMoneyTest = 103.32M,
+                RealTest = 32.53F,
+                NumericTest = 154343.3434342M,
+                FloatTest = 232.43F,
+                FloatTest2 = 43243.34,
+                TextTest = "This is some text.",
+                GuidTest = Guid.NewGuid(),
+                CharTest = "Some",
+                XmlTest = "<title>The best SQL Bulk tool</title>",
+                NCharTest = "SomeText",
+                ImageTest = new byte[] { 3, 3, 32, 4 },
+                TestSqlGeometry = SqlGeometry.Point(-2.74612, 53.881238, 4326),
+                TestSqlGeography = SqlGeography.Point(-5, 43.432, 4326)
+            };
+
+            return dataTypeTestRecord;
         }
 
         private long BulkInsert(IEnumerable<Book> col)
