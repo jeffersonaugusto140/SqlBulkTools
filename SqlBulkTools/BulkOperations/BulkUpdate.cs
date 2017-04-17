@@ -175,7 +175,7 @@ namespace SqlBulkTools
                 command.ExecuteNonQuery();
 
                 //Bulk insert into temp table
-                BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings, _columns, _identityColumn);
+                BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings, _columns, _identityColumn, _ordinalDic);
 
                 string comm = BulkOperationsHelper.GetOutputCreateTableCmd(_outputIdentity, Constants.TempOutputTableName,
                 OperationType.InsertOrUpdate, _identityColumn);
@@ -266,7 +266,7 @@ namespace SqlBulkTools
                 await command.ExecuteNonQueryAsync();
 
                 //Bulk insert into temp table
-                BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings, _columns, _identityColumn);
+                BulkOperationsHelper.InsertToTmpTable(connection, dt, _bulkCopySettings, _columns, _identityColumn, _ordinalDic);
 
                 string comm = BulkOperationsHelper.GetOutputCreateTableCmd(_outputIdentity, Constants.TempOutputTableName,
                 OperationType.InsertOrUpdate, _identityColumn);

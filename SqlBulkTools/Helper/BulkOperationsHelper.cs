@@ -44,7 +44,7 @@ namespace SqlBulkTools
                     // SQL Server 2000
                     case 8:
                         throw new SqlBulkToolsException("SqlBulkTools is not supported for SQL Server 2000. Recommended version is SQL Server 2008.");
-                    
+
                     // SQL Server 2005
                     case 9:
                         if (operationType != OperationType.Insert)
@@ -512,7 +512,7 @@ namespace SqlBulkTools
             return command.ToString();
         }
 
-        internal static string BuildInsertIntoSet(HashSet<string> columns, string identityColumn, string fullQualifiedTableName)
+        internal static string BuildInsertIntoSet(HashSet<string> columns, string identityColumn, string fullQualifiedTableName, bool keepIdentity = false)
         {
             StringBuilder command = new StringBuilder();
             List<string> insertColumns = new List<string>();
@@ -521,7 +521,7 @@ namespace SqlBulkTools
 
             foreach (var column in columns.OrderBy(x => x))
             {
-                if (column != Constants.InternalId && column != identityColumn)
+                if (column != Constants.InternalId && (column != identityColumn || keepIdentity))
                     insertColumns.Add("[" + column + "]");
             }
 
@@ -547,25 +547,50 @@ namespace SqlBulkTools
             return command.ToString();
         }
 
-        internal static string BuildValueSetFromDataTable(DataTable dt, string identityColumn, HashSet<string> columns, Dictionary<string, int> ordinalDic)
+        internal static BulkInsertStrategyType GetBulkInsertStrategyType(DataTable dt, HashSet<string> columns)
         {
+            int paramCount = columns.Count * dt.Rows.Count;
+
+            if (dt.Rows.Count <= Constants.BulkCopyRecordThreshold 
+                && paramCount <= Constants.MaxSqlParameters)
+                return BulkInsertStrategyType.MultiValueInsert;
+
+            return BulkInsertStrategyType.BulkCopy;
+        }
+
+        internal static TempTableSetup BuildValueSetFromDataTable(DataTable dt, string identityColumn, HashSet<string> columns, 
+            Dictionary<string, int> ordinalDic, BulkCopySettings bulkCopySettings)
+        {
+            TempTableSetup tbl = new TempTableSetup();
             StringBuilder command = new StringBuilder();
+            List<SqlParameter> sqlParamList = new List<SqlParameter>();
+
+            bool keepIdentity = bulkCopySettings != null
+                                && bulkCopySettings.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity);
+
+            command.Append(BuildInsertIntoSet(columns, identityColumn, Constants.TempTableName, keepIdentity));
+            command.Append("VALUES ");
 
             int totalCols = columns.Count;
             int currentCol = 0;
-            
+
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 command.Append("(");
                 foreach (var column in columns)
                 {
                     currentCol++;
-                    if (column != identityColumn)
+
+                    if (column != identityColumn || keepIdentity)
                     {
                         int ordinal;
                         if (ordinalDic.TryGetValue(column, out ordinal))
                         {
-                            command.Append(dt.Rows[i][ordinal]);
+                            var colValue = dt.Rows[i][ordinal];
+                            string paramName = $"@{column}{i + 1}";
+
+                            sqlParamList.Add(new SqlParameter(paramName, colValue));
+                            command.Append(paramName);
 
                             if (currentCol != totalCols)
                                 command.Append(", ");
@@ -573,15 +598,17 @@ namespace SqlBulkTools
                     }
                 }
 
+                command.Append(")");
+
                 if (i != dt.Rows.Count - 1)
                     command.Append(", ");
 
                 currentCol = 0;
             }
 
-            command.Append(")");
-
-            return command.ToString();
+            tbl.InsertQuery = command.ToString();
+            tbl.SqlParameterList = sqlParamList;
+            return tbl;
         }
 
         internal static string BuildSelectSet(HashSet<string> columns, string sourceAlias, string identityColumn)
@@ -676,25 +703,6 @@ namespace SqlBulkTools
                 {
                     AddPropertyToDataTable(property, columnMappings, dataTable, ordinalDic, columns, false, null);
                 }
-
-                //var type = Nullable.GetUnderlyingType(property.PropertyType) ??
-                //                    property.PropertyType;
-
-                //if (columnMappings != null && columnMappings.ContainsKey(property.Name))
-                //{
-                //    dataTable.Columns.Add(columnMappings[property.Name], type);
-                //    var ordinal = dataTable.Columns[columnMappings[property.Name]].Ordinal;
-
-                //    ordinalDic.Add(property.Name, ordinal);
-                //}
-
-                //else if (columns.Contains(property.Name))
-                //{
-                //    dataTable.Columns.Add(property.Name, type);
-                //    var ordinal = dataTable.Columns[property.Name].Ordinal;
-
-                //    ordinalDic.Add(property.Name, ordinal);
-                //}          
             }
 
             if (outputIdentityCol)
@@ -1133,35 +1141,22 @@ namespace SqlBulkTools
             return dtCols;
         }
 
-        internal static void InsertToTmpTable(SqlConnection conn, DataTable dt, BulkCopySettings bulkCopySettings, 
-            HashSet<string> columns, string identityColumn)
+        internal static void InsertToTmpTable(SqlConnection conn, DataTable dt, BulkCopySettings bulkCopySettings,
+            HashSet<string> columns, string identityColumn, Dictionary<string, int> ordinalDic)
         {
-            // Don't use BulkCopy if rows less than or equal to some threshhold
-            if (dt.Rows.Count <= Constants.BulkCopyRecordThreshold)
+            using (SqlBulkCopy bulkcopy = new SqlBulkCopy(conn, bulkCopySettings.SqlBulkCopyOptions, null))
             {
+                bulkcopy.DestinationTableName = Constants.TempTableName;
 
-                StringBuilder sb = new StringBuilder();
-                sb.Append(BuildInsertIntoSet(columns, identityColumn, Constants.TempTableName));
+                SetSqlBulkCopySettings(bulkcopy, bulkCopySettings);
 
-
-            }
-            else
-            {
-                using (SqlBulkCopy bulkcopy = new SqlBulkCopy(conn, bulkCopySettings.SqlBulkCopyOptions, null))
+                foreach (var column in dt.Columns)
                 {
-                    bulkcopy.DestinationTableName = Constants.TempTableName;
-
-                    SetSqlBulkCopySettings(bulkcopy, bulkCopySettings);
-
-                    foreach (var column in dt.Columns)
-                    {
-                        bulkcopy.ColumnMappings.Add(column.ToString(), column.ToString());
-                    }
-
-                    bulkcopy.WriteToServer(dt);
+                    bulkcopy.ColumnMappings.Add(column.ToString(), column.ToString());
                 }
-            }
 
+                bulkcopy.WriteToServer(dt);
+            }
         }
 
         internal static async Task InsertToTmpTableAsync(SqlConnection conn, SqlTransaction transaction, DataTable dt, BulkCopySettings bulkCopySettings)

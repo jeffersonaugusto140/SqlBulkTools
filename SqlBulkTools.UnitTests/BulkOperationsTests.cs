@@ -237,6 +237,45 @@ namespace SqlBulkTools.UnitTests
         }
 
         [TestMethod]
+        public void BulkOperationsHelper_BuildValueSetFromDataTable_WithSingleValue()
+        {
+            var bookList = GetBookList().Where(x => x.Title == "Book1");
+            HashSet<string> columns = new HashSet<string>() { "Description", "Id", "ISBN", "Title"  };
+            Dictionary<string, int> ordinalDic = new Dictionary<string, int>();
+            List<PropertyInfo> propertyInfoList = typeof(Book).GetProperties().OrderBy(x => x.Name).ToList();
+
+            var dataTable = BulkOperationsHelper.CreateDataTable<Book>(propertyInfoList, columns, null, ordinalDic);
+            BulkOperationsHelper.ConvertListToDataTable(propertyInfoList, dataTable, bookList, columns, ordinalDic);
+
+            var result = BulkOperationsHelper.BuildValueSetFromDataTable(dataTable, "Id", columns, ordinalDic, null);
+            var result2 = BulkOperationsHelper.BuildValueSetFromDataTable(dataTable, "Id", columns, ordinalDic, new BulkCopySettings(){SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity});
+
+            Assert.AreEqual("INSERT INTO #TmpTable ([Description], [ISBN], [Title]) VALUES (@Description1, @ISBN1, @Title1)", result.InsertQuery);
+            Assert.AreEqual("INSERT INTO #TmpTable ([Description], [Id], [ISBN], [Title]) VALUES (@Description1, @Id1, @ISBN1, @Title1)", result2.InsertQuery);
+        }
+
+        [TestMethod]
+        public void BulkOperationsHelper_BuildValueSetFromDataTable_WithMultipleValues()
+        {
+            var bookList = GetBookList();
+            HashSet<string> columns = new HashSet<string>() { "Description", "Id", "ISBN", "Title" };
+            Dictionary<string, int> ordinalDic = new Dictionary<string, int>();
+            List<PropertyInfo> propertyInfoList = typeof(Book).GetProperties().OrderBy(x => x.Name).ToList();
+
+            var dataTable = BulkOperationsHelper.CreateDataTable<Book>(propertyInfoList, columns, null, ordinalDic);
+            BulkOperationsHelper.ConvertListToDataTable(propertyInfoList, dataTable, bookList, columns, ordinalDic);
+
+            var result = BulkOperationsHelper.BuildValueSetFromDataTable(dataTable, "Id", columns, ordinalDic, null);
+            var result2 = BulkOperationsHelper.BuildValueSetFromDataTable(dataTable, "Id", columns, ordinalDic, new BulkCopySettings() { SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity });
+
+            Assert.AreEqual("INSERT INTO #TmpTable ([Description], [ISBN], [Title]) VALUES (@Description1, @ISBN1, @Title1), " +
+                            "(@Description2, @ISBN2, @Title2), (@Description3, @ISBN3, @Title3)", result.InsertQuery);
+
+            Assert.AreEqual("INSERT INTO #TmpTable ([Description], [Id], [ISBN], [Title]) VALUES (@Description1, @Id1, @ISBN1, @Title1), " +
+                            "(@Description2, @Id2, @ISBN2, @Title2), (@Description3, @Id3, @ISBN3, @Title3)", result2.InsertQuery);
+        }
+
+        [TestMethod]
         public void BulkOperationsHelper_CreateDataTableForComplexType_IsStructuredCorrectly()
         {
             HashSet<string> columns = new HashSet<string>() { "AverageEstimate_TotalCost", "AverageEstimate_CreationDate", "Competition", "MinEstimate_TotalCost", "MinEstimate_CreationDate", "SearchVolume" };
@@ -697,17 +736,16 @@ namespace SqlBulkTools.UnitTests
             return parameters;
         }
 
-        private HashSet<string> GetBookColumns()
+        private List<Book> GetBookList()
         {
-            HashSet<string> parameters = new HashSet<string>();
+            List<Book> bookList = new List<Book>()
+            {
+                new Book(){Description = "This is book 1", Id = 0, ISBN = "123456789", Title = "Book1"},
+                new Book(){Description = "This is book 2", Id = 0, ISBN = "123456789", Title = "Book2"},
+                new Book(){Description = "This is book 3", Id = 0, ISBN = "123456789", Title = "Book3"}
+            };
 
-            parameters.Add("Id");
-            parameters.Add("ISBN");
-            parameters.Add("Title");
-            parameters.Add("PublishDate");
-            parameters.Add("Price");
-
-            return parameters;
+            return bookList;
         }
     }
 }

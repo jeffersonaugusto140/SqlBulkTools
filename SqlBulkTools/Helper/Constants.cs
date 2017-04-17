@@ -13,5 +13,6 @@ namespace SqlBulkTools
         internal const string Rebuild = "REBUILD";
         internal const string Disable = "DISABLE";
         internal const int BulkCopyRecordThreshold = 15;
+        internal const int MaxSqlParameters = 2099;
     }
 }
