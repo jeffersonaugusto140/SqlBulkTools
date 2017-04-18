@@ -502,7 +502,8 @@ namespace SqlBulkTools
             return command.ToString();
         }
 
-        internal static string BuildInsertIntoSet(HashSet<string> columns, string identityColumn, string fullQualifiedTableName, bool keepIdentity = false)
+        internal static string BuildInsertIntoSet(HashSet<string> columns, string identityColumn, string fullQualifiedTableName, 
+            bool keepIdentity = false, bool keepInternalId = false)
         {
             StringBuilder command = new StringBuilder();
             List<string> insertColumns = new List<string>();
@@ -511,7 +512,7 @@ namespace SqlBulkTools
 
             foreach (var column in columns.OrderBy(x => x))
             {
-                if (column != Constants.InternalId && (column != identityColumn || keepIdentity))
+                if ((column != Constants.InternalId && (column != identityColumn || keepIdentity)) || keepInternalId)
                     insertColumns.Add("[" + column + "]");
             }
 
@@ -549,7 +550,7 @@ namespace SqlBulkTools
         }
 
         internal static TempTableSetup BuildInsertQueryFromDataTable(DataTable dt, string identityColumn, HashSet<string> columns, 
-            Dictionary<string, int> ordinalDic, BulkCopySettings bulkCopySettings, SchemaDetail schemaDetail)
+            Dictionary<string, int> ordinalDic, BulkCopySettings bulkCopySettings, SchemaDetail schemaDetail, string tableName = null)
         {
             TempTableSetup tbl = new TempTableSetup();
             StringBuilder command = new StringBuilder();
@@ -558,7 +559,8 @@ namespace SqlBulkTools
             bool keepIdentity = bulkCopySettings != null
                                 && bulkCopySettings.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity);
 
-            command.Append(BuildInsertIntoSet(columns, identityColumn, Constants.TempTableName, keepIdentity));
+
+            command.Append(BuildInsertIntoSet(columns, identityColumn, tableName ?? Constants.TempTableName, true, true));
             command.Append("VALUES ");
 
             int totalCols = columns.Count;
@@ -571,8 +573,8 @@ namespace SqlBulkTools
                 {
                     currentCol++;
 
-                    if (column != identityColumn || keepIdentity)
-                    {
+                    //if (column != Constants.InternalId && (column != identityColumn))
+                    //{
                         int ordinal;
                         if (ordinalDic.TryGetValue(column, out ordinal))
                         {
@@ -631,7 +633,7 @@ namespace SqlBulkTools
                             if (currentCol != totalCols)
                                 command.Append(", ");
                         }
-                    }
+                    //}
                 }
 
                 command.Append(")");
