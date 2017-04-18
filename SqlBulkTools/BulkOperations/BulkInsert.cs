@@ -116,17 +116,18 @@ namespace SqlBulkTools
                 command.CommandText = schemaDetail.BuildCreateTableQuery;
                 command.ExecuteNonQuery();
 
-                //if (BulkOperationsHelper.GetBulkInsertStrategyType(dtCols, _columns) ==
-                //    BulkInsertStrategyType.MultiValueInsert)
-                //{
+                if (BulkOperationsHelper.GetBulkInsertStrategyType(dtCols, _columns) ==
+                    BulkInsertStrategyType.MultiValueInsert)
+                {
 
-                //    var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(dt, _identityColumn,
-                //        _columns, _ordinalDic, _bulkCopySettings, schemaDetail);
-                //    command.CommandText = tempTableSetup.InsertQuery;
-                //    command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
-                //    command.ExecuteNonQuery();
-                //}
-                //else
+                    var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(dt, _identityColumn,
+                        _columns, _ordinalDic, _bulkCopySettings, schemaDetail);
+                    command.CommandText = tempTableSetup.InsertQuery + ";";
+                    command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
+                    command.ExecuteNonQuery();
+                    command.Parameters.Clear();
+                }
+                else
                     BulkOperationsHelper.InsertToTmpTableWithBulkCopy(connection, dt, _bulkCopySettings);
 
                 command.CommandText = BulkOperationsHelper.GetInsertIntoStagingTableCmd(command, connection, _schema,

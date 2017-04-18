@@ -1252,9 +1252,12 @@ namespace SqlBulkTools
 
             if (operationType == OperationType.Insert)
             {
+                
+
                 command.CommandText =
                     $"SELECT {identityColumn} FROM {Constants.TempOutputTableName} ORDER BY {identityColumn};";
 
+                
                 using (SqlDataReader reader = command.ExecuteReader())
                 {
                     var items = list.ToList();
@@ -1344,14 +1347,14 @@ namespace SqlBulkTools
                 tableName);
 
             string comm =
-            GetOutputCreateTableCmd(outputIdentity, Constants.TempOutputTableName,
-            OperationType.Insert, identityColumn) +
-            BuildInsertIntoSet(columns, identityColumn, fullTableName)
-            + "OUTPUT INSERTED.[" + identityColumn + "] INTO "
-            + Constants.TempOutputTableName + "([" + identityColumn + "]) "
-            + BuildSelectSet(columns, Constants.SourceAlias, identityColumn)
-            + " FROM " + Constants.TempTableName + " AS Source; " +
-            "DROP TABLE " + Constants.TempTableName + ";";
+                GetOutputCreateTableCmd(outputIdentity, Constants.TempOutputTableName,
+                    OperationType.Insert, identityColumn) +
+                BuildInsertIntoSet(columns, identityColumn, fullTableName)
+                + "OUTPUT INSERTED.[" + identityColumn + "] INTO "
+                + Constants.TempOutputTableName + "([" + identityColumn + "]) "
+                + BuildSelectSet(columns, Constants.SourceAlias, identityColumn)
+                + " FROM " + Constants.TempTableName + " AS Source; "; /*+*/
+            //"DROP TABLE " + Constants.TempTableName + ";";
 
             return comm;
         }

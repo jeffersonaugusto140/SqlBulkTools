@@ -275,8 +275,6 @@ namespace SqlBulkTools
                 string comm = BulkOperationsHelper.GetOutputCreateTableCmd(_outputIdentity, Constants.TempOutputTableName,
                 OperationType.InsertOrUpdate, _identityColumn);
 
-
-
                 if (!string.IsNullOrWhiteSpace(comm))
                 {
                     command.CommandText = comm;
