@@ -264,10 +264,11 @@ namespace SqlBulkTools
                 {
 
                     var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(dt, _identityColumn, _columns,
-                        _ordinalDic, _bulkCopySettings, schemaDetail);
+                        _ordinalDic, _bulkCopySettings, schemaDetail, tableName: Constants.TempTableName, keepIdentity: true, keepInternalId: true);
                     command.CommandText = tempTableSetup.InsertQuery;
                     command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
                     command.ExecuteNonQuery();
+                    command.Parameters.Clear();
                 }
                 else
                     BulkOperationsHelper.InsertToTmpTableWithBulkCopy(connection, dt, _bulkCopySettings);
@@ -466,15 +467,7 @@ namespace SqlBulkTools
                     BulkOperationsHelper.BuildUpdateSet(_columns, Constants.SourceAlias, Constants.TargetAlias, _identityColumn, _excludeFromUpdate, _bulkCopySettings);
         }
 
-        private string GetSetIdentityCmd(bool on)
-        {
-            string onOrOffStr = on ? "ON" : "OFF";
 
-            if (_bulkCopySettings == null)
-                return string.Empty;
-
-            return _bulkCopySettings.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity) ? $"SET IDENTITY_INSERT [{_schema}].[{_tableName}] {onOrOffStr} " : string.Empty;
-        }
 
     }
 }

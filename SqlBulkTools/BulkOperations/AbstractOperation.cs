@@ -137,5 +137,18 @@ namespace SqlBulkTools
                                                     "column depending on your business rules.");
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        protected string GetSetIdentityCmd(bool on)
+        {
+            string onOrOffStr = on ? "ON" : "OFF";
+
+            if (_bulkCopySettings == null)
+                return string.Empty;
+
+            return _bulkCopySettings.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity) ? $"SET IDENTITY_INSERT [{_schema}].[{_tableName}] {onOrOffStr} " : string.Empty;
+        }
     }
 }

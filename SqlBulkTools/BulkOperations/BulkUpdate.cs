@@ -29,7 +29,7 @@ namespace SqlBulkTools
         /// <param name="customColumnMappings"></param>
         /// <param name="bulkCopySettings"></param>
         /// <param name="propertyInfoList"></param>
-        public BulkUpdate(IEnumerable<T> list, string tableName, string schema, HashSet<string> columns, 
+        public BulkUpdate(IEnumerable<T> list, string tableName, string schema, HashSet<string> columns,
             Dictionary<string, string> customColumnMappings, BulkCopySettings bulkCopySettings, List<PropertyInfo> propertyInfoList)
             :
             base(list, tableName, schema, columns, customColumnMappings, bulkCopySettings, propertyInfoList)
@@ -139,31 +139,32 @@ namespace SqlBulkTools
         /// <returns></returns>
         /// <exception cref="IdentityException"></exception>
         public int Commit(SqlConnection connection)
-        {           
-            int affectedRows = 0;
-            if (!_list.Any())
-            {
-                return affectedRows;
-            }
-
-            base.MatchTargetCheck();
-
-            DataTable dt = BulkOperationsHelper.CreateDataTable<T>(_propertyInfoList, _columns, _customColumnMappings, _ordinalDic, _matchTargetOn, _outputIdentity);
-            dt = BulkOperationsHelper.ConvertListToDataTable(_propertyInfoList, dt, _list, _columns, _ordinalDic, _outputIdentityDic);
-
-            // Must be after ToDataTable is called. 
-            BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _columns, _matchTargetOn);
-            BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _updatePredicates);
-
-            if (connection.State == ConnectionState.Closed)
-                connection.Open();
-
-            BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.Update);
-
-            var dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
-
+        {
             try
             {
+                int affectedRows = 0;
+                if (!_list.Any())
+                {
+                    return affectedRows;
+                }
+
+                base.MatchTargetCheck();
+
+                DataTable dt = BulkOperationsHelper.CreateDataTable<T>(_propertyInfoList, _columns, _customColumnMappings, _ordinalDic, _matchTargetOn, _outputIdentity);
+                dt = BulkOperationsHelper.ConvertListToDataTable(_propertyInfoList, dt, _list, _columns, _ordinalDic, _outputIdentityDic);
+
+                // Must be after ToDataTable is called. 
+                BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _columns, _matchTargetOn);
+                BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _updatePredicates);
+
+                if (connection.State == ConnectionState.Closed)
+                    connection.Open();
+
+                BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.Update);
+
+                var dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
+
+
                 SqlCommand command = connection.CreateCommand();
                 command.Connection = connection;
                 command.CommandTimeout = _sqlTimeout;
@@ -181,10 +182,11 @@ namespace SqlBulkTools
                 {
 
                     var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(dt, _identityColumn, _columns,
-                        _ordinalDic, _bulkCopySettings, schemaDetail);
+                        _ordinalDic, _bulkCopySettings, schemaDetail, tableName: Constants.TempTableName, keepIdentity: true, keepInternalId: true);
                     command.CommandText = tempTableSetup.InsertQuery;
                     command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
                     command.ExecuteNonQuery();
+                    command.Parameters.Clear();
                 }
                 else
                     BulkOperationsHelper.InsertToTmpTableWithBulkCopy(connection, dt, _bulkCopySettings);
@@ -241,7 +243,7 @@ namespace SqlBulkTools
         /// <returns></returns>
         /// <exception cref="IdentityException"></exception>
         public async Task<int> CommitAsync(SqlConnection connection)
-        {          
+        {
             int affectedRows = 0;
             if (!_list.Any())
             {
@@ -270,7 +272,7 @@ namespace SqlBulkTools
                 command.Connection = connection;
                 command.CommandTimeout = _sqlTimeout;
 
-                
+
 
                 //Creating temp table on database
                 var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);

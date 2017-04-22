@@ -759,6 +759,7 @@ namespace SqlBulkTools.IntegrationTests
                         .WithTable("SchemaTest") // Don't specify schema. Default schema dbo is used. 
                         .AddAllColumns()
                         .BulkInsert()
+                        .SetIdentityColumn(x => x.Id)
                         .Commit(conn);
 
                 }
@@ -1307,12 +1308,6 @@ namespace SqlBulkTools.IntegrationTests
                 using (SqlConnection conn = new SqlConnection(ConfigurationManager
                     .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
                 {
-                    bulk.Setup<Book>()
-                        .ForCollection(_randomizer.GetRandomCollection(rows))
-                        .WithTable("Books")
-                        .AddAllColumns()
-                        .BulkInsert()
-                        .Commit(conn);
 
                     bulk.Setup<Book>()
                         .ForCollection(books)
@@ -1321,13 +1316,12 @@ namespace SqlBulkTools.IntegrationTests
                         .BulkInsert()
                         .SetIdentityColumn(x => x.Id, ColumnDirectionType.InputOutput)
                         .Commit(conn);
-
                 }
 
                 trans.Complete();
             }
 
-            var test = _dataAccess.GetBookList().ElementAt(2); // Random between random items before test and total items after test. 
+            var test = _dataAccess.GetBookList().ElementAt(2);
             var expected = books.Single(x => x.ISBN == test.ISBN);
 
             Assert.AreEqual(expected.Id, test.Id);
@@ -1853,7 +1847,7 @@ namespace SqlBulkTools.IntegrationTests
 
             List<Book> books = _randomizer.GetRandomCollection(rows);
 
-            books[17].BestSeller = true;
+            books[2].BestSeller = true;
 
             using (TransactionScope trans = new TransactionScope())
             {

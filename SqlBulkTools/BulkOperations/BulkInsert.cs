@@ -77,108 +77,127 @@ namespace SqlBulkTools
         /// <returns></returns>
         public int Commit(SqlConnection connection)
         {
-            int affectedRows = 0;
-
-            if (!_list.Any())
+            try
             {
+                int affectedRows = 0;
+
+                if (!_list.Any())
+                {
+                    return affectedRows;
+                }
+
+                DataTable dt = BulkOperationsHelper.CreateDataTable<T>(_propertyInfoList, _columns, _customColumnMappings, _ordinalDic, _matchTargetOn, _outputIdentity);
+                dt = BulkOperationsHelper.ConvertListToDataTable(_propertyInfoList, dt, _list, _columns, _ordinalDic);
+
+                // Must be after ToDataTable is called. 
+                BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _columns, _matchTargetOn);
+
+                if (connection.State == ConnectionState.Closed)
+                    connection.Open();
+
+                BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.Insert);
+
+                DataTable dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
+
+                string destinationTableName = BulkOperationsHelper.GetFullQualifyingTableName(connection.Database, _schema, _tableName);
+                var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
+
+                SqlCommand command = connection.CreateCommand();
+                command.Connection = connection;
+
+                if (_disableAllIndexes)
+                {
+                    command.CommandText = BulkOperationsHelper.GetIndexManagementCmd(Constants.Disable, _tableName,
+                        _schema, connection);
+                    command.ExecuteNonQuery();
+                }
+
+                // If InputOutput identity is selected, must use staging table.
+                if (_outputIdentity == ColumnDirectionType.InputOutput && dtCols != null)
+                {
+                    command.CommandText = schemaDetail.BuildCreateTableQuery;
+                    command.ExecuteNonQuery();
+
+                    if (BulkOperationsHelper.GetBulkInsertStrategyType(dt, _columns) ==
+                        BulkInsertStrategyType.MultiValueInsert)
+                    {
+
+                        var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(dt, _identityColumn,
+                            _columns, _ordinalDic, _bulkCopySettings, schemaDetail, Constants.TempTableName, keepIdentity: true, keepInternalId: true);
+                        command.CommandText = tempTableSetup.InsertQuery;
+                        command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
+                        command.ExecuteNonQuery();
+                        command.Parameters.Clear();
+                    }
+                    else
+                        BulkOperationsHelper.InsertToTmpTableWithBulkCopy(connection, dt, _bulkCopySettings);
+
+                    command.CommandText = BulkOperationsHelper.GetInsertIntoStagingTableCmd(command, connection, _schema,
+                        _tableName,
+                        _columns, _identityColumn, _outputIdentity);
+                    command.ExecuteNonQuery();
+
+                    BulkOperationsHelper.LoadFromTmpOutputTable(command, _identityColumn, _outputIdentityDic,
+                        OperationType.Insert, _list);
+
+                }
+
+                else if (BulkOperationsHelper.GetBulkInsertStrategyType(dt, _columns) ==
+                         BulkInsertStrategyType.MultiValueInsert)
+                {
+                    var tableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(dt, _identityColumn,
+                    _columns,
+                    _ordinalDic, _bulkCopySettings, schemaDetail, destinationTableName);
+                    command.CommandText = GetSetIdentityCmd(on: true);
+                    command.CommandText += tableSetup.InsertQuery;
+                    command.CommandText += " " + GetSetIdentityCmd(on: false);
+                    command.Parameters.AddRange(tableSetup.SqlParameterList.ToArray());
+                    command.ExecuteNonQuery();
+                }
+
+                else
+                {
+                    using (SqlBulkCopy bulkcopy = new SqlBulkCopy(connection, _bulkCopySettings.SqlBulkCopyOptions, null))
+                    {
+                        bulkcopy.DestinationTableName = destinationTableName;
+                        BulkOperationsHelper.MapColumns(bulkcopy, _columns, _customColumnMappings);
+
+                        BulkOperationsHelper.SetSqlBulkCopySettings(bulkcopy, _bulkCopySettings);
+                        bulkcopy.WriteToServer(dt);
+
+                        bulkcopy.Close();
+                    }
+
+                }
+
+
+                if (_disableAllIndexes)
+                {
+                    command.CommandText = BulkOperationsHelper.GetIndexManagementCmd(Constants.Rebuild, _tableName,
+                        _schema, connection);
+                    command.ExecuteNonQuery();
+                }
+
+
+
+                affectedRows = dt.Rows.Count;
                 return affectedRows;
             }
 
-            DataTable dt = BulkOperationsHelper.CreateDataTable<T>(_propertyInfoList, _columns, _customColumnMappings, _ordinalDic, _matchTargetOn, _outputIdentity);
-            dt = BulkOperationsHelper.ConvertListToDataTable(_propertyInfoList, dt, _list, _columns, _ordinalDic);
-
-            // Must be after ToDataTable is called. 
-            BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _columns, _matchTargetOn);
-
-            if (connection.State == ConnectionState.Closed)
-                connection.Open();
-
-            BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.Insert);
-
-            DataTable dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
-
-            string destinationTableName = BulkOperationsHelper.GetFullQualifyingTableName(connection.Database, _schema, _tableName);
-            var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
-
-            SqlCommand command = connection.CreateCommand();
-            command.Connection = connection;
-
-            if (_disableAllIndexes)
+            catch (SqlException e)
             {
-                command.CommandText = BulkOperationsHelper.GetIndexManagementCmd(Constants.Disable, _tableName,
-                    _schema, connection);
-                command.ExecuteNonQuery();
-            }
-
-            // If InputOutput identity is selected, must use staging table.
-            if (_outputIdentity == ColumnDirectionType.InputOutput && dtCols != null)
-            {
-                command.CommandText = schemaDetail.BuildCreateTableQuery;
-                command.ExecuteNonQuery();
-
-                if (BulkOperationsHelper.GetBulkInsertStrategyType(dtCols, _columns) ==
-                    BulkInsertStrategyType.MultiValueInsert)
+                for (int i = 0; i < e.Errors.Count; i++)
                 {
-
-                    var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(dt, _identityColumn,
-                        _columns, _ordinalDic, _bulkCopySettings, schemaDetail);
-                    command.CommandText = tempTableSetup.InsertQuery + ";";
-                    command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
-                    command.ExecuteNonQuery();
-                    command.Parameters.Clear();
-                }
-                else
-                    BulkOperationsHelper.InsertToTmpTableWithBulkCopy(connection, dt, _bulkCopySettings);
-
-                command.CommandText = BulkOperationsHelper.GetInsertIntoStagingTableCmd(command, connection, _schema,
-                    _tableName,
-                    _columns, _identityColumn, _outputIdentity);
-                command.ExecuteNonQuery();
-
-                BulkOperationsHelper.LoadFromTmpOutputTable(command, _identityColumn, _outputIdentityDic,
-                    OperationType.Insert, _list);
-
-            }
-
-            else if (BulkOperationsHelper.GetBulkInsertStrategyType(dt, _columns) ==
-                     BulkInsertStrategyType.MultiValueInsert)
-            {
-                var tableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(dt, _identityColumn,
-                _columns,
-                _ordinalDic, _bulkCopySettings, schemaDetail, destinationTableName);
-                command.CommandText = tableSetup.InsertQuery;
-                command.Parameters.AddRange(tableSetup.SqlParameterList.ToArray());
-                command.ExecuteNonQuery();
-            }
-
-            else
-            {
-                using (SqlBulkCopy bulkcopy = new SqlBulkCopy(connection, _bulkCopySettings.SqlBulkCopyOptions, null))
-                {
-                    bulkcopy.DestinationTableName = destinationTableName;
-                    BulkOperationsHelper.MapColumns(bulkcopy, _columns, _customColumnMappings);
-
-                    BulkOperationsHelper.SetSqlBulkCopySettings(bulkcopy, _bulkCopySettings);
-                    bulkcopy.WriteToServer(dt);
-
-                    bulkcopy.Close();
+                    // Error 8102 is identity error. 
+                    if (e.Errors[i].Number == 8102 || e.Errors[i].Number == 544)
+                    {
+                        // Expensive but neccessary to inform user of an important configuration setup. 
+                        throw new IdentityException(e.Errors[i].Message);
+                    }
                 }
 
+                throw;
             }
-
-
-            if (_disableAllIndexes)
-            {
-                command.CommandText = BulkOperationsHelper.GetIndexManagementCmd(Constants.Rebuild, _tableName,
-                    _schema, connection);
-                command.ExecuteNonQuery();
-            }
-
-
-
-            affectedRows = dt.Rows.Count;
-            return affectedRows;
-
         }
 
         /// <summary>

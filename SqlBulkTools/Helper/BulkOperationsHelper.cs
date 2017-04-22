@@ -550,20 +550,20 @@ namespace SqlBulkTools
         }
 
         internal static TempTableSetup BuildInsertQueryFromDataTable(DataTable dt, string identityColumn, HashSet<string> columns, 
-            Dictionary<string, int> ordinalDic, BulkCopySettings bulkCopySettings, SchemaDetail schemaDetail, string tableName = null)
+            Dictionary<string, int> ordinalDic, BulkCopySettings bulkCopySettings, SchemaDetail schemaDetail, string tableName = null, 
+            bool keepIdentity = false, bool keepInternalId = false)
         {
             TempTableSetup tbl = new TempTableSetup();
             StringBuilder command = new StringBuilder();
             List<SqlParameter> sqlParamList = new List<SqlParameter>();
 
-            bool keepIdentity = bulkCopySettings != null
-                                && bulkCopySettings.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity);
+            bool shouldKeepIdentity = (bulkCopySettings != null
+                                && bulkCopySettings.SqlBulkCopyOptions.HasFlag(SqlBulkCopyOptions.KeepIdentity) || keepIdentity);
 
-
-            command.Append(BuildInsertIntoSet(columns, identityColumn, tableName ?? Constants.TempTableName, true, true));
+            command.Append(BuildInsertIntoSet(columns, identityColumn, tableName ?? Constants.TempTableName, shouldKeepIdentity, keepInternalId));
             command.Append("VALUES ");
 
-            int totalCols = columns.Count;
+            int totalCols = columns.Count();
             int currentCol = 0;
 
             for (int i = 0; i < dt.Rows.Count; i++)
@@ -573,8 +573,8 @@ namespace SqlBulkTools
                 {
                     currentCol++;
 
-                    //if (column != Constants.InternalId && (column != identityColumn))
-                    //{
+                    if ((column != Constants.InternalId || keepInternalId) && (column != identityColumn) || shouldKeepIdentity)
+                    {
                         int ordinal;
                         if (ordinalDic.TryGetValue(column, out ordinal))
                         {
@@ -633,7 +633,7 @@ namespace SqlBulkTools
                             if (currentCol != totalCols)
                                 command.Append(", ");
                         }
-                    //}
+                    }
                 }
 
                 command.Append(")");
@@ -1353,8 +1353,8 @@ namespace SqlBulkTools
                 + "OUTPUT INSERTED.[" + identityColumn + "] INTO "
                 + Constants.TempOutputTableName + "([" + identityColumn + "]) "
                 + BuildSelectSet(columns, Constants.SourceAlias, identityColumn)
-                + " FROM " + Constants.TempTableName + " AS Source; "; /*+*/
-            //"DROP TABLE " + Constants.TempTableName + ";";
+                + " FROM " + Constants.TempTableName + " AS Source; "+
+                "DROP TABLE " + Constants.TempTableName + ";";
 
             return comm;
         }

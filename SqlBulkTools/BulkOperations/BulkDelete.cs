@@ -180,6 +180,7 @@ namespace SqlBulkTools
                 command.CommandText = tempTableSetup.InsertQuery;
                 command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
                 command.ExecuteNonQuery();
+                command.Parameters.Clear();
             }
             else
                 BulkOperationsHelper.InsertToTmpTableWithBulkCopy(connection, dt, _bulkCopySettings);

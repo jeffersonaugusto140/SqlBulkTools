@@ -1353,12 +1353,6 @@ namespace SqlBulkTools.IntegrationTests
                 using (SqlConnection conn = new SqlConnection(ConfigurationManager
                     .ConnectionStrings["SqlBulkToolsTest"].ConnectionString))
                 {
-                    bulk.Setup<Book>()
-                        .ForCollection(_randomizer.GetRandomCollection(60))
-                        .WithTable("Books")
-                        .AddAllColumns()
-                        .BulkInsert()
-                        .Commit(conn);
 
                     bulk.Setup<Book>()
                         .ForCollection(books)
@@ -1373,7 +1367,7 @@ namespace SqlBulkTools.IntegrationTests
                 trans.Complete();
             }
 
-            var test = _dataAccess.GetBookList().ElementAt(80); // Random between random items before test and total items after test. 
+            var test = _dataAccess.GetBookList().ElementAt(17); // Random between random items before test and total items after test. 
             var expected = books.Single(x => x.ISBN == test.ISBN);
 
             Assert.AreEqual(expected.Id, test.Id);
