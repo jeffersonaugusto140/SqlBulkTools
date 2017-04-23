@@ -255,8 +255,8 @@ namespace SqlBulkTools.UnitTests
             var dataTable = BulkOperationsHelper.CreateDataTable<Book>(propertyInfoList, columns, null, ordinalDic);
             BulkOperationsHelper.ConvertListToDataTable(propertyInfoList, dataTable, bookList, columns, ordinalDic);
 
-            var result = BulkOperationsHelper.BuildInsertQueryFromDataTable(dataTable, "Id", columns, ordinalDic, null, schemaDetail);
-            var result2 = BulkOperationsHelper.BuildInsertQueryFromDataTable(dataTable, "Id", columns, ordinalDic, 
+            var result = BulkOperationsHelper.BuildInsertQueryFromDataTable(new Dictionary<string, string>(), dataTable, "Id", columns, ordinalDic, null, schemaDetail);
+            var result2 = BulkOperationsHelper.BuildInsertQueryFromDataTable(new Dictionary<string, string>(), dataTable, "Id", columns, ordinalDic, 
                 new BulkCopySettings(){SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity}, schemaDetail);
 
             Assert.AreEqual("INSERT INTO #TmpTable ([Description], [ISBN], [Title]) VALUES (@Description1, @ISBN1, @Title1)", result.InsertQuery);
@@ -281,8 +281,8 @@ namespace SqlBulkTools.UnitTests
             var dataTable = BulkOperationsHelper.CreateDataTable<Book>(propertyInfoList, columns, null, ordinalDic);
             BulkOperationsHelper.ConvertListToDataTable(propertyInfoList, dataTable, bookList, columns, ordinalDic);
 
-            var result = BulkOperationsHelper.BuildInsertQueryFromDataTable(dataTable, "Id", columns, ordinalDic, null, schemaDetail);
-            var result2 = BulkOperationsHelper.BuildInsertQueryFromDataTable(dataTable, "Id", columns, ordinalDic,
+            var result = BulkOperationsHelper.BuildInsertQueryFromDataTable(new Dictionary<string, string>(), dataTable, "Id", columns, ordinalDic, null, schemaDetail);
+            var result2 = BulkOperationsHelper.BuildInsertQueryFromDataTable(new Dictionary<string, string>(), dataTable, "Id", columns, ordinalDic,
                 new BulkCopySettings() { SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity }, schemaDetail);
 
             Assert.AreEqual("INSERT INTO #TmpTable ([Description], [ISBN], [Title]) VALUES (@Description1, @ISBN1, @Title1), " +

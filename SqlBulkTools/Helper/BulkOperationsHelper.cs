@@ -549,7 +549,7 @@ namespace SqlBulkTools
             return BulkInsertStrategyType.BulkCopy;
         }
 
-        internal static TempTableSetup BuildInsertQueryFromDataTable(DataTable dt, string identityColumn, HashSet<string> columns, 
+        internal static TempTableSetup BuildInsertQueryFromDataTable(Dictionary<string, string> customColumnDic, DataTable dt, string identityColumn, HashSet<string> columns, 
             Dictionary<string, int> ordinalDic, BulkCopySettings bulkCopySettings, SchemaDetail schemaDetail, string tableName = null, 
             bool keepIdentity = false, bool keepInternalId = false)
         {
@@ -563,7 +563,7 @@ namespace SqlBulkTools
             command.Append(BuildInsertIntoSet(columns, identityColumn, tableName ?? Constants.TempTableName, shouldKeepIdentity, keepInternalId));
             command.Append("VALUES ");
 
-            int totalCols = columns.Count();
+            int totalCols = columns.Count(x => (x != Constants.InternalId || keepInternalId) && (x != identityColumn) || shouldKeepIdentity);
             int currentCol = 0;
 
             for (int i = 0; i < dt.Rows.Count; i++)
@@ -576,6 +576,7 @@ namespace SqlBulkTools
                     if ((column != Constants.InternalId || keepInternalId) && (column != identityColumn) || shouldKeepIdentity)
                     {
                         int ordinal;
+
                         if (ordinalDic.TryGetValue(column, out ordinal))
                         {
                             var colValue = dt.Rows[i][ordinal];

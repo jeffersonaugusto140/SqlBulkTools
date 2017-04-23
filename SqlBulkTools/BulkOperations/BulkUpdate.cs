@@ -181,7 +181,7 @@ namespace SqlBulkTools
                     BulkInsertStrategyType.MultiValueInsert)
                 {
 
-                    var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(dt, _identityColumn, _columns,
+                    var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn, _columns,
                         _ordinalDic, _bulkCopySettings, schemaDetail, tableName: Constants.TempTableName, keepIdentity: true, keepInternalId: true);
                     command.CommandText = tempTableSetup.InsertQuery;
                     command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
@@ -286,7 +286,7 @@ namespace SqlBulkTools
                     BulkInsertStrategyType.MultiValueInsert)
                 {
 
-                    var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(dt, _identityColumn, _columns,
+                    var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn, _columns,
                         _ordinalDic, _bulkCopySettings, schemaDetail);
                     command.CommandText = tempTableSetup.InsertQuery;
                     command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
