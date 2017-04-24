@@ -171,10 +171,11 @@ namespace SqlBulkTools
         /// successful.
         /// </summary>
         /// <param name="conn"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
         /// <exception cref="NullReferenceException"></exception>
         /// <exception cref="IdentityException"></exception>
-        public int Commit(SqlConnection conn)
+        public int Commit(SqlConnection conn, int commandTimeout = 30)
         {
             int affectedRows = 0;
             if (_singleEntity == null)
@@ -195,6 +196,7 @@ namespace SqlBulkTools
 
                 SqlCommand command = conn.CreateCommand();
                 command.Connection = conn;
+                command.CommandTimeout = commandTimeout;
 
                 string fullQualifiedTableName = BulkOperationsHelper.GetFullQualifyingTableName(conn.Database, _schema, _tableName);
 
@@ -249,10 +251,11 @@ namespace SqlBulkTools
         /// successful.
         /// </summary>
         /// <param name="conn"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
         /// <exception cref="NullReferenceException"></exception>
         /// <exception cref="IdentityException"></exception>
-        public async Task<int> CommitAsync(SqlConnection conn)
+        public async Task<int> CommitAsync(SqlConnection conn, int commandTimeout = 30)
         {
             int affectedRows = 0;
             if (_singleEntity == null)
@@ -273,6 +276,7 @@ namespace SqlBulkTools
 
                 SqlCommand command = conn.CreateCommand();
                 command.Connection = conn;
+                command.CommandTimeout = commandTimeout;
 
                 string fullQualifiedTableName = BulkOperationsHelper.GetFullQualifyingTableName(conn.Database, _schema, _tableName);
 

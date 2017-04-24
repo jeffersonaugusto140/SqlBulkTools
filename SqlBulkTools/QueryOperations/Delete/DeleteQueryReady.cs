@@ -133,14 +133,16 @@ namespace SqlBulkTools
         /// successful.
         /// </summary>
         /// <param name="connection"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public int Commit(SqlConnection connection)
+        public int Commit(SqlConnection connection, int commandTimeout = 30)
         {            
             if (connection.State == ConnectionState.Closed)
                 connection.Open();
 
             SqlCommand command = connection.CreateCommand();
             command.Connection = connection;
+            command.CommandTimeout = commandTimeout;
 
             command.CommandText = GetQuery(connection);
 
@@ -159,8 +161,9 @@ namespace SqlBulkTools
         /// successful.
         /// </summary>
         /// <param name="connection"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public async Task<int> CommitAsync(SqlConnection connection)
+        public async Task<int> CommitAsync(SqlConnection connection, int commandTimeout = 30)
         {
 
             if (connection.State == ConnectionState.Closed)
@@ -168,6 +171,7 @@ namespace SqlBulkTools
 
             SqlCommand command = connection.CreateCommand();
             command.Connection = connection;
+            command.CommandTimeout = commandTimeout;
 
             command.CommandText = command.CommandText = GetQuery(connection);
 

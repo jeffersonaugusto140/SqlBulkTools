@@ -2164,56 +2164,6 @@ namespace SqlBulkTools.IntegrationTests
         }
 
         [TestMethod]
-        //TODO add assertion
-        public async Task SqlBulkTools_BulkUpdateWithNullablePredicate()
-        {
-            const int rows = 10;
-            await BulkDelete(_dataAccess.GetBookList());
-            BulkOperations bulk = new BulkOperations();
-
-            List<Book> books = _randomizer.GetRandomCollection(rows);
-
-            using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-            {
-                using (SqlConnection conn = new SqlConnection(_connectionString))
-                {
-                    await bulk.Setup<Book>()
-                        .ForCollection(books)
-                        .WithTable("Books")
-                        .AddAllColumns()
-                        .BulkInsert()
-                        .SetIdentityColumn(x => x.Id, ColumnDirectionType.InputOutput)
-                        .CommitAsync(conn);
-
-                }
-
-                trans.Complete();
-            }
-
-            using (TransactionScope trans = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-            {
-                using (SqlConnection conn = new SqlConnection(_connectionString))
-                {
-                    Book book = new Book()
-                    {
-                        TestNullableInt = 40
-                    };
-
-                    await bulk.Setup<Book>()
-                        .ForObject(new Book() { TestNullableInt = book.TestNullableInt })
-                        .WithTable("Books")
-                        .AddColumn(x => x.TestNullableInt)
-                        .Update()
-                        .Where(x => x.Id == 3)
-                        .And(x => x.TestNullableInt == book.TestNullableInt)
-                        .CommitAsync(conn);
-                }
-
-                trans.Complete();
-            }
-        }
-
-        [TestMethod]
         public async Task SqlBulkTools_BulkInsertOrUpdate_TestDataTypes()
         {
             await BulkDelete(_dataAccess.GetBookList());

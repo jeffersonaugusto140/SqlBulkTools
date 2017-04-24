@@ -74,8 +74,9 @@ namespace SqlBulkTools
         /// successful.
         /// </summary>
         /// <param name="connection"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public int Commit(SqlConnection connection)
+        public int Commit(SqlConnection connection, int commandTimeout = 0)
         {
             try
             {
@@ -104,6 +105,7 @@ namespace SqlBulkTools
 
                 SqlCommand command = connection.CreateCommand();
                 command.Connection = connection;
+                command.CommandTimeout = commandTimeout;
 
                 if (_disableAllIndexes)
                 {
@@ -203,8 +205,9 @@ namespace SqlBulkTools
         /// successful.
         /// </summary>
         /// <param name="connection"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public async Task<int> CommitAsync(SqlConnection connection)
+        public async Task<int> CommitAsync(SqlConnection connection, int commandTimeout = 0)
         {
             try
             {
@@ -233,6 +236,7 @@ namespace SqlBulkTools
 
                 SqlCommand command = connection.CreateCommand();
                 command.Connection = connection;
+                command.CommandTimeout = commandTimeout;
 
                 if (_disableAllIndexes)
                 {

@@ -212,10 +212,11 @@ namespace SqlBulkTools
         /// successful.
         /// </summary>
         /// <param name="connection"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
         /// <exception cref="SqlBulkToolsException"></exception>
         /// <exception cref="IdentityException"></exception>
-        public int Commit(SqlConnection connection)
+        public int Commit(SqlConnection connection, int commandTimeout = 0)
         {
             try
             {
@@ -250,7 +251,7 @@ namespace SqlBulkTools
                 SqlCommand command = connection.CreateCommand();
 
                 command.Connection = connection;
-                command.CommandTimeout = _sqlTimeout;
+                command.CommandTimeout = commandTimeout;
 
                 //Creating temp table on database
                 var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
@@ -323,10 +324,11 @@ namespace SqlBulkTools
         /// successful.
         /// </summary>
         /// <param name="connection"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
         /// <exception cref="SqlBulkToolsException"></exception>
         /// <exception cref="IdentityException"></exception>
-        public async Task<int> CommitAsync(SqlConnection connection)
+        public async Task<int> CommitAsync(SqlConnection connection, int commandTimeout = 0)
         {
             try
             {
@@ -360,7 +362,7 @@ namespace SqlBulkTools
                 SqlCommand command = connection.CreateCommand();
 
                 command.Connection = connection;
-                command.CommandTimeout = _sqlTimeout;
+                command.CommandTimeout = commandTimeout;
 
                 //Creating temp table on database
                 var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);

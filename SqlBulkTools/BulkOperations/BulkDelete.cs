@@ -135,8 +135,9 @@ namespace SqlBulkTools
         /// successful.
         /// </summary>
         /// <param name="connection"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public int Commit(SqlConnection connection)
+        public int Commit(SqlConnection connection, int commandTimeout = 0)
         {            
             int affectedRecords = 0;
             if (!_list.Any())
@@ -162,7 +163,7 @@ namespace SqlBulkTools
 
             SqlCommand command = connection.CreateCommand();
             command.Connection = connection;
-            command.CommandTimeout = _sqlTimeout;
+            command.CommandTimeout = commandTimeout;
 
             //Creating temp table on database
             var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
@@ -218,8 +219,9 @@ namespace SqlBulkTools
         /// successful.
         /// </summary>
         /// <param name="connection"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
-        public async Task<int> CommitAsync(SqlConnection connection)
+        public async Task<int> CommitAsync(SqlConnection connection, int commandTimeout = 0)
         {
             int affectedRecords = 0;
             if (!_list.Any())
@@ -245,7 +247,7 @@ namespace SqlBulkTools
 
             SqlCommand command = connection.CreateCommand();
             command.Connection = connection;
-            command.CommandTimeout = _sqlTimeout;
+            command.CommandTimeout = commandTimeout;
 
             //Creating temp table on database
             var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);

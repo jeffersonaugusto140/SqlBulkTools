@@ -18,7 +18,6 @@ namespace SqlBulkTools
         protected string _identityColumn;
         protected Dictionary<int, T> _outputIdentityDic;
         protected bool _disableAllIndexes;
-        protected int _sqlTimeout;
         protected HashSet<string> _columns;
         protected string _schema;
         protected string _tableName;

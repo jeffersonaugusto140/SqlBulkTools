@@ -112,9 +112,10 @@ namespace SqlBulkTools.QueryOperations
         /// successful.
         /// </summary>
         /// <param name="connection"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
         /// <exception cref="IdentityException"></exception>
-        public int Commit(SqlConnection connection)
+        public int Commit(SqlConnection connection, int commandTimeout = 30)
         {
             int affectedRows = 0;
             if (_singleEntity == null)
@@ -132,6 +133,7 @@ namespace SqlBulkTools.QueryOperations
 
                 SqlCommand command = connection.CreateCommand();
                 command.Connection = connection;
+                command.CommandTimeout = commandTimeout;
 
                 string fullQualifiedTableName = BulkOperationsHelper.GetFullQualifyingTableName(connection.Database, _schema,
                 _tableName);
@@ -194,9 +196,10 @@ namespace SqlBulkTools.QueryOperations
         /// successful.
         /// </summary>
         /// <param name="connection"></param>
+        /// <param name="commandTimeout"></param>
         /// <returns></returns>
         /// <exception cref="IdentityException"></exception>
-        public async Task<int> CommitAsync(SqlConnection connection)
+        public async Task<int> CommitAsync(SqlConnection connection, int commandTimeout = 30)
         {
             int affectedRows = 0;
             if (_singleEntity == null)
@@ -214,6 +217,7 @@ namespace SqlBulkTools.QueryOperations
 
                 SqlCommand command = connection.CreateCommand();
                 command.Connection = connection;
+                command.CommandTimeout = commandTimeout;
 
                 string fullQualifiedTableName = BulkOperationsHelper.GetFullQualifyingTableName(connection.Database, _schema,
                 _tableName);

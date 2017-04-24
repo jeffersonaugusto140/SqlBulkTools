@@ -2181,54 +2181,6 @@ namespace SqlBulkTools.IntegrationTests
         }
 
         [TestMethod]
-        public void SqlBulkTools_BulkUpdateWithNullablePredicate()
-        {
-            BulkDelete(_dataAccess.GetBookList());
-            BulkOperations bulk = new BulkOperations();
-
-            List<Book> books = _randomizer.GetRandomCollection(30);
-
-            using (TransactionScope trans = new TransactionScope())
-            {
-                using (SqlConnection conn = new SqlConnection(_connectionString))
-                {
-                    bulk.Setup<Book>()
-                        .ForCollection(books)
-                        .WithTable("Books")
-                        .AddAllColumns()
-                        .BulkInsert()
-                        .SetIdentityColumn(x => x.Id, ColumnDirectionType.InputOutput)
-                        .Commit(conn);
-
-                }
-
-                trans.Complete();
-            }
-
-            using (TransactionScope trans = new TransactionScope())
-            {
-                using (SqlConnection conn = new SqlConnection(_connectionString))
-                {
-                    Book book = new Book()
-                    {
-                        TestNullableInt = 40
-                    };
-
-                    bulk.Setup<Book>()
-                        .ForObject(new Book() { TestNullableInt = book.TestNullableInt })
-                        .WithTable("Books")
-                        .AddColumn(x => x.TestNullableInt)
-                        .Update()
-                        .Where(x => x.Id == 10)
-                        .And(x => x.TestNullableInt == book.TestNullableInt)
-                        .Commit(conn);
-                }
-
-                trans.Complete();
-            }
-        }
-
-        [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdate_TestDataTypes()
         {
             BulkDelete(_dataAccess.GetBookList());
