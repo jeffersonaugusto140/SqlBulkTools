@@ -20,7 +20,7 @@ namespace SqlBulkTools
         private bool _deleteWhenNotMatchedFlag;
         private bool _excludeAllColumnsFromUpdate;
         private readonly HashSet<string> _excludeFromUpdate;
-        private Dictionary<string, bool> _nullableColumnDic;        
+        private Dictionary<string, bool> _nullableColumnDic;
 
         /// <summary>
         /// 
@@ -216,36 +216,37 @@ namespace SqlBulkTools
         /// <exception cref="SqlBulkToolsException"></exception>
         /// <exception cref="IdentityException"></exception>
         public int Commit(SqlConnection connection)
-        {            
-            int affectedRows = 0;
-            if (!_list.Any())
-            {
-                return affectedRows;
-            }
-
-            if (!_deleteWhenNotMatchedFlag && _deletePredicates.Count > 0)
-                throw new SqlBulkToolsException($"{BulkOperationsHelper.GetPredicateMethodName(PredicateType.Delete)} only usable on BulkInsertOrUpdate " +
-                                                $"method when 'DeleteWhenNotMatched' is set to true.");
-
-            base.MatchTargetCheck();
-
-            DataTable dt = BulkOperationsHelper.CreateDataTable<T>(_propertyInfoList, _columns, _customColumnMappings, _ordinalDic, _matchTargetOn, _outputIdentity);
-            dt = BulkOperationsHelper.ConvertListToDataTable(_propertyInfoList, dt, _list, _columns, _ordinalDic, _outputIdentityDic);
-
-            // Must be after ToDataTable is called. 
-            BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _columns, _matchTargetOn);
-            BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _deletePredicates);
-            BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _updatePredicates);
-
-            if (connection.State != ConnectionState.Open)
-                connection.Open();
-
-            BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.InsertOrUpdate);
-
-            var dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
-
+        {
             try
             {
+                int affectedRows = 0;
+                if (!_list.Any())
+                {
+                    return affectedRows;
+                }
+
+                if (!_deleteWhenNotMatchedFlag && _deletePredicates.Count > 0)
+                    throw new SqlBulkToolsException($"{BulkOperationsHelper.GetPredicateMethodName(PredicateType.Delete)} only usable on BulkInsertOrUpdate " +
+                                                    $"method when 'DeleteWhenNotMatched' is set to true.");
+
+                base.MatchTargetCheck();
+
+                DataTable dt = BulkOperationsHelper.CreateDataTable<T>(_propertyInfoList, _columns, _customColumnMappings, _ordinalDic, _matchTargetOn, _outputIdentity);
+                dt = BulkOperationsHelper.ConvertListToDataTable(_propertyInfoList, dt, _list, _columns, _ordinalDic, _outputIdentityDic);
+
+                // Must be after ToDataTable is called. 
+                BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _columns, _matchTargetOn);
+                BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _deletePredicates);
+                BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _updatePredicates);
+
+                if (connection.State != ConnectionState.Open)
+                    connection.Open();
+
+                BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.InsertOrUpdate);
+
+                var dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
+
+
                 SqlCommand command = connection.CreateCommand();
 
                 command.Connection = connection;
@@ -314,7 +315,7 @@ namespace SqlBulkTools
                 }
 
                 throw;
-            }           
+            }
         }
 
         /// <summary>
@@ -326,36 +327,35 @@ namespace SqlBulkTools
         /// <exception cref="SqlBulkToolsException"></exception>
         /// <exception cref="IdentityException"></exception>
         public async Task<int> CommitAsync(SqlConnection connection)
-        {          
-            int affectedRows = 0;
-            if (!_list.Any())
-            {
-                return affectedRows;
-            }
-
-            if (!_deleteWhenNotMatchedFlag && _deletePredicates.Count > 0)
-                throw new SqlBulkToolsException($"{BulkOperationsHelper.GetPredicateMethodName(PredicateType.Delete)} only usable on BulkInsertOrUpdate " +
-                                                $"method when 'DeleteWhenNotMatched' is set to true.");
-
-            base.MatchTargetCheck();
-
-            DataTable dt = BulkOperationsHelper.CreateDataTable<T>(_propertyInfoList, _columns, _customColumnMappings, _ordinalDic, _matchTargetOn, _outputIdentity);
-            dt = BulkOperationsHelper.ConvertListToDataTable(_propertyInfoList, dt, _list, _columns, _ordinalDic, _outputIdentityDic);
-
-            // Must be after ToDataTable is called. 
-            BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _columns, _matchTargetOn);
-            BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _deletePredicates);
-            BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _updatePredicates);
-
-            if (connection.State != ConnectionState.Open)
-                await connection.OpenAsync();
-
-            BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.InsertOrUpdate);
-
-            var dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
-
+        {
             try
             {
+                int affectedRows = 0;
+                if (!_list.Any())
+                {
+                    return affectedRows;
+                }
+
+                if (!_deleteWhenNotMatchedFlag && _deletePredicates.Count > 0)
+                    throw new SqlBulkToolsException($"{BulkOperationsHelper.GetPredicateMethodName(PredicateType.Delete)} only usable on BulkInsertOrUpdate " +
+                                                    $"method when 'DeleteWhenNotMatched' is set to true.");
+
+                base.MatchTargetCheck();
+
+                DataTable dt = BulkOperationsHelper.CreateDataTable<T>(_propertyInfoList, _columns, _customColumnMappings, _ordinalDic, _matchTargetOn, _outputIdentity);
+                dt = BulkOperationsHelper.ConvertListToDataTable(_propertyInfoList, dt, _list, _columns, _ordinalDic, _outputIdentityDic);
+
+                // Must be after ToDataTable is called. 
+                BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _columns, _matchTargetOn);
+                BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _deletePredicates);
+                BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _updatePredicates);
+
+                if (connection.State != ConnectionState.Open)
+                    await connection.OpenAsync();
+
+                BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.InsertOrUpdate);
+
+                var dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
 
                 SqlCommand command = connection.CreateCommand();
 
@@ -365,6 +365,7 @@ namespace SqlBulkTools
                 //Creating temp table on database
                 var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
                 command.CommandText = schemaDetail.BuildCreateTableQuery;
+
                 await command.ExecuteNonQueryAsync();
 
                 _nullableColumnDic = schemaDetail.NullableDic;
@@ -374,16 +375,17 @@ namespace SqlBulkTools
                 {
 
                     var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn, _columns,
-                        _bulkCopySettings, schemaDetail, Constants.TempTableName, keepIdentity: true, keepInternalId: true);
+                        _bulkCopySettings, schemaDetail, tableName: Constants.TempTableName, keepIdentity: true, keepInternalId: true);
                     command.CommandText = tempTableSetup.InsertQuery;
                     command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
                     await command.ExecuteNonQueryAsync();
+                    command.Parameters.Clear();
                 }
                 else
                     await BulkOperationsHelper.InsertToTmpTableWithBulkCopyAsync(connection, dt, _bulkCopySettings);
 
                 string comm = BulkOperationsHelper.GetOutputCreateTableCmd(_outputIdentity, Constants.TempOutputTableName,
-                OperationType.InsertOrUpdate, _identityColumn);
+                    OperationType.InsertOrUpdate, _identityColumn);
 
                 if (!string.IsNullOrWhiteSpace(comm))
                 {

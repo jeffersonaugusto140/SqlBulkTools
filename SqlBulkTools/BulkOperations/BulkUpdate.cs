@@ -244,35 +244,34 @@ namespace SqlBulkTools
         /// <exception cref="IdentityException"></exception>
         public async Task<int> CommitAsync(SqlConnection connection)
         {
-            int affectedRows = 0;
-            if (!_list.Any())
-            {
-                return affectedRows;
-            }
-
-            base.MatchTargetCheck();
-
-            DataTable dt = BulkOperationsHelper.CreateDataTable<T>(_propertyInfoList, _columns, _customColumnMappings, _ordinalDic, _matchTargetOn, _outputIdentity);
-            dt = BulkOperationsHelper.ConvertListToDataTable(_propertyInfoList, dt, _list, _columns, _ordinalDic, _outputIdentityDic);
-
-            // Must be after ToDataTable is called. 
-            BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _columns, _matchTargetOn);
-            BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _updatePredicates);
-
-            if (connection.State == ConnectionState.Closed)
-                await connection.OpenAsync();
-
-            BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.Update);
-
-            var dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
-
             try
             {
+                int affectedRows = 0;
+                if (!_list.Any())
+                {
+                    return affectedRows;
+                }
+
+                base.MatchTargetCheck();
+
+                DataTable dt = BulkOperationsHelper.CreateDataTable<T>(_propertyInfoList, _columns, _customColumnMappings, _ordinalDic, _matchTargetOn, _outputIdentity);
+                dt = BulkOperationsHelper.ConvertListToDataTable(_propertyInfoList, dt, _list, _columns, _ordinalDic, _outputIdentityDic);
+
+                // Must be after ToDataTable is called. 
+                BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _columns, _matchTargetOn);
+                BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _updatePredicates);
+
+                if (connection.State == ConnectionState.Closed)
+                    await connection.OpenAsync();
+
+                BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.Update);
+
+                var dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
+
+
                 SqlCommand command = connection.CreateCommand();
                 command.Connection = connection;
                 command.CommandTimeout = _sqlTimeout;
-
-
 
                 //Creating temp table on database
                 var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
@@ -291,12 +290,13 @@ namespace SqlBulkTools
                     command.CommandText = tempTableSetup.InsertQuery;
                     command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
                     await command.ExecuteNonQueryAsync();
+                    command.Parameters.Clear();
                 }
                 else
                     await BulkOperationsHelper.InsertToTmpTableWithBulkCopyAsync(connection, dt, _bulkCopySettings);
 
                 string comm = BulkOperationsHelper.GetOutputCreateTableCmd(_outputIdentity, Constants.TempOutputTableName,
-                OperationType.Update, _identityColumn);
+                    OperationType.Update, _identityColumn);
 
                 if (!string.IsNullOrWhiteSpace(comm))
                 {
@@ -317,12 +317,11 @@ namespace SqlBulkTools
 
                 if (_outputIdentity == ColumnDirectionType.InputOutput)
                 {
-                    BulkOperationsHelper.LoadFromTmpOutputTable(command, _identityColumn, _outputIdentityDic, OperationType.InsertOrUpdate, _list);
+                    await BulkOperationsHelper.LoadFromTmpOutputTableAsync(command, _identityColumn, _outputIdentityDic, OperationType.InsertOrUpdate, _list);
                 }
 
                 return affectedRows;
             }
-
 
             catch (SqlException e)
             {

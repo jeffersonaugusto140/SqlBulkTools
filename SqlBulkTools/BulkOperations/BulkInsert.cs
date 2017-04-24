@@ -152,6 +152,7 @@ namespace SqlBulkTools
                     command.CommandText += " " + GetSetIdentityCmd(on: false);
                     command.Parameters.AddRange(tableSetup.SqlParameterList.ToArray());
                     command.ExecuteNonQuery();
+                    command.Parameters.Clear();
                 }
 
                 else
@@ -166,9 +167,7 @@ namespace SqlBulkTools
 
                         bulkcopy.Close();
                     }
-
                 }
-
 
                 if (_disableAllIndexes)
                 {
@@ -207,34 +206,30 @@ namespace SqlBulkTools
         /// <returns></returns>
         public async Task<int> CommitAsync(SqlConnection connection)
         {
-            int affectedRows = 0;
-
-            if (!_list.Any())
+            try
             {
-                return affectedRows;
-            }
+                int affectedRows = 0;
 
-            DataTable dt = BulkOperationsHelper.CreateDataTable<T>(_propertyInfoList, _columns, _customColumnMappings, _ordinalDic, _matchTargetOn, _outputIdentity);
-            dt = BulkOperationsHelper.ConvertListToDataTable(_propertyInfoList, dt, _list, _columns, _ordinalDic);
+                if (!_list.Any())
+                {
+                    return affectedRows;
+                }
 
-            // Must be after ToDataTable is called. 
-            BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _columns, _matchTargetOn);
+                DataTable dt = BulkOperationsHelper.CreateDataTable<T>(_propertyInfoList, _columns, _customColumnMappings, _ordinalDic, _matchTargetOn, _outputIdentity);
+                dt = BulkOperationsHelper.ConvertListToDataTable(_propertyInfoList, dt, _list, _columns, _ordinalDic);
 
-            if (connection.State != ConnectionState.Open)
-                await connection.OpenAsync();
+                // Must be after ToDataTable is called. 
+                BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _columns, _matchTargetOn);
 
-            BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.Insert);
+                if (connection.State == ConnectionState.Closed)
+                    await connection.OpenAsync();
 
-            DataTable dtCols = null;
-            if (_outputIdentity == ColumnDirectionType.InputOutput)
-                dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
+                BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.Insert);
 
-            using (SqlBulkCopy bulkcopy = new SqlBulkCopy(connection, _bulkCopySettings.SqlBulkCopyOptions, null))
-            {
-                bulkcopy.DestinationTableName = BulkOperationsHelper.GetFullQualifyingTableName(connection.Database, _schema, _tableName);
-                BulkOperationsHelper.MapColumns(bulkcopy, _columns, _customColumnMappings);
+                DataTable dtCols = BulkOperationsHelper.GetDatabaseSchema(connection, _schema, _tableName);
 
-                BulkOperationsHelper.SetSqlBulkCopySettings(bulkcopy, _bulkCopySettings);
+                string destinationTableName = BulkOperationsHelper.GetFullQualifyingTableName(connection.Database, _schema, _tableName);
+                var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
 
                 SqlCommand command = connection.CreateCommand();
                 command.Connection = connection;
@@ -249,32 +244,60 @@ namespace SqlBulkTools
                 // If InputOutput identity is selected, must use staging table.
                 if (_outputIdentity == ColumnDirectionType.InputOutput && dtCols != null)
                 {
-                    var schemaDetail = BulkOperationsHelper.BuildCreateTempTable(_columns, dtCols, _outputIdentity);
                     command.CommandText = schemaDetail.BuildCreateTableQuery;
                     await command.ExecuteNonQueryAsync();
 
-                    //if (BulkOperationsHelper.GetBulkInsertStrategyType(dt, _columns) ==
-                    //    BulkInsertStrategyType.MultiValueInsert)
-                    //{
+                    if (BulkOperationsHelper.GetBulkInsertStrategyType(dt, _columns) ==
+                        BulkInsertStrategyType.MultiValueInsert)
+                    {
 
-                    //    var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn, _columns,
-                    //        _bulkCopySettings, schemaDetail, destinationTableName, keepIdentity: true, keepInternalId: true);
-                    //    command.CommandText = tempTableSetup.InsertQuery;
-                    //    command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
-                    //    await command.ExecuteNonQueryAsync();
-                    //}
-                    //else
+                        var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn,
+                            _columns, _bulkCopySettings, schemaDetail, Constants.TempTableName, keepIdentity: true, keepInternalId: true);
+                        command.CommandText = tempTableSetup.InsertQuery;
+                        command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
+                        await command.ExecuteNonQueryAsync();
+                        command.Parameters.Clear();
+                    }
+                    else
                         await BulkOperationsHelper.InsertToTmpTableWithBulkCopyAsync(connection, dt, _bulkCopySettings);
 
-                    command.CommandText = BulkOperationsHelper.GetInsertIntoStagingTableCmd(command, connection, _schema, _tableName,
+                    command.CommandText = BulkOperationsHelper.GetInsertIntoStagingTableCmd(command, connection, _schema,
+                        _tableName,
                         _columns, _identityColumn, _outputIdentity);
                     await command.ExecuteNonQueryAsync();
 
-                    BulkOperationsHelper.LoadFromTmpOutputTable(command, _identityColumn, _outputIdentityDic, OperationType.Insert, _list);
+                    await BulkOperationsHelper.LoadFromTmpOutputTableAsync(command, _identityColumn, _outputIdentityDic,
+                        OperationType.Insert, _list);
+
+                }
+
+                else if (BulkOperationsHelper.GetBulkInsertStrategyType(dt, _columns) ==
+                         BulkInsertStrategyType.MultiValueInsert)
+                {
+                    var tableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn,
+                        _columns, _bulkCopySettings, schemaDetail, destinationTableName);
+                    command.CommandText = GetSetIdentityCmd(on: true);
+                    command.CommandText += tableSetup.InsertQuery;
+                    command.CommandText += " " + GetSetIdentityCmd(on: false);
+                    command.Parameters.AddRange(tableSetup.SqlParameterList.ToArray());
+                    await command.ExecuteNonQueryAsync();
+                    command.Parameters.Clear();
                 }
 
                 else
-                    await bulkcopy.WriteToServerAsync(dt);
+                {
+                    using (SqlBulkCopy bulkcopy = new SqlBulkCopy(connection, _bulkCopySettings.SqlBulkCopyOptions, null))
+                    {
+                        bulkcopy.DestinationTableName = destinationTableName;
+                        BulkOperationsHelper.MapColumns(bulkcopy, _columns, _customColumnMappings);
+
+                        BulkOperationsHelper.SetSqlBulkCopySettings(bulkcopy, _bulkCopySettings);
+                        await bulkcopy.WriteToServerAsync(dt);
+
+                        bulkcopy.Close();
+                    }
+
+                }
 
                 if (_disableAllIndexes)
                 {
@@ -283,11 +306,23 @@ namespace SqlBulkTools
                     await command.ExecuteNonQueryAsync();
                 }
 
-                bulkcopy.Close();
-
                 affectedRows = dt.Rows.Count;
                 return affectedRows;
+            }
 
+            catch (SqlException e)
+            {
+                for (int i = 0; i < e.Errors.Count; i++)
+                {
+                    // Error 8102 is identity error. 
+                    if (e.Errors[i].Number == 8102 || e.Errors[i].Number == 544)
+                    {
+                        // Expensive but neccessary to inform user of an important configuration setup. 
+                        throw new IdentityException(e.Errors[i].Message);
+                    }
+                }
+
+                throw;
             }
         }
     }

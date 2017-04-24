@@ -211,8 +211,6 @@ namespace SqlBulkTools
             }
 
             return affectedRecords;
-
-
         }
 
         /// <summary>
@@ -222,7 +220,7 @@ namespace SqlBulkTools
         /// <param name="connection"></param>
         /// <returns></returns>
         public async Task<int> CommitAsync(SqlConnection connection)
-        {            
+        {
             int affectedRecords = 0;
             if (!_list.Any())
             {
@@ -238,7 +236,7 @@ namespace SqlBulkTools
             BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _columns);
             BulkOperationsHelper.DoColumnMappings(_customColumnMappings, _deletePredicates);
 
-            if (connection.State != ConnectionState.Open)
+            if (connection.State == ConnectionState.Closed)
                 await connection.OpenAsync();
 
             BulkOperationsHelper.ValidateMsSqlVersion(connection, OperationType.Delete);
@@ -265,12 +263,13 @@ namespace SqlBulkTools
                 command.CommandText = tempTableSetup.InsertQuery;
                 command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
                 await command.ExecuteNonQueryAsync();
+                command.Parameters.Clear();
             }
             else
                 await BulkOperationsHelper.InsertToTmpTableWithBulkCopyAsync(connection, dt, _bulkCopySettings);
 
             string comm = BulkOperationsHelper.GetOutputCreateTableCmd(_outputIdentity, Constants.TempOutputTableName,
-            OperationType.Delete, _identityColumn);
+                OperationType.Delete, _identityColumn);
 
             if (!string.IsNullOrWhiteSpace(comm))
             {
@@ -287,11 +286,11 @@ namespace SqlBulkTools
                 command.Parameters.AddRange(_parameters.ToArray());
             }
 
-            affectedRecords = command.ExecuteNonQuery();
+            affectedRecords = await command.ExecuteNonQueryAsync();
 
             if (_outputIdentity == ColumnDirectionType.InputOutput)
             {
-                BulkOperationsHelper.LoadFromTmpOutputTable(command, _identityColumn, _outputIdentityDic, OperationType.Delete, _list);
+                await BulkOperationsHelper.LoadFromTmpOutputTableAsync(command, _identityColumn, _outputIdentityDic, OperationType.Delete, _list);
             }
 
             return affectedRecords;
