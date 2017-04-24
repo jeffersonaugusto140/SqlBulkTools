@@ -176,7 +176,7 @@ namespace SqlBulkTools
             {
 
                 var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn, _columns,
-                    _ordinalDic, _bulkCopySettings, schemaDetail);
+                    _bulkCopySettings, schemaDetail, Constants.TempTableName, keepIdentity: true, keepInternalId: true);
                 command.CommandText = tempTableSetup.InsertQuery;
                 command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
                 command.ExecuteNonQuery();
@@ -186,7 +186,7 @@ namespace SqlBulkTools
                 BulkOperationsHelper.InsertToTmpTableWithBulkCopy(connection, dt, _bulkCopySettings);
 
             string comm = BulkOperationsHelper.GetOutputCreateTableCmd(_outputIdentity, Constants.TempOutputTableName,
-            OperationType.InsertOrUpdate, _identityColumn);
+            OperationType.Delete, _identityColumn);
 
             if (!string.IsNullOrWhiteSpace(comm))
             {
@@ -261,7 +261,7 @@ namespace SqlBulkTools
             {
 
                 var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn, _columns,
-                    _ordinalDic, _bulkCopySettings, schemaDetail);
+                    _bulkCopySettings, schemaDetail, Constants.TempTableName, keepIdentity: true, keepInternalId: true);
                 command.CommandText = tempTableSetup.InsertQuery;
                 command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
                 await command.ExecuteNonQueryAsync();
@@ -270,7 +270,7 @@ namespace SqlBulkTools
                 await BulkOperationsHelper.InsertToTmpTableWithBulkCopyAsync(connection, dt, _bulkCopySettings);
 
             string comm = BulkOperationsHelper.GetOutputCreateTableCmd(_outputIdentity, Constants.TempOutputTableName,
-            OperationType.InsertOrUpdate, _identityColumn);
+            OperationType.Delete, _identityColumn);
 
             if (!string.IsNullOrWhiteSpace(comm))
             {

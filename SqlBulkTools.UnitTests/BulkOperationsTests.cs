@@ -255,9 +255,9 @@ namespace SqlBulkTools.UnitTests
             var dataTable = BulkOperationsHelper.CreateDataTable<Book>(propertyInfoList, columns, null, ordinalDic);
             BulkOperationsHelper.ConvertListToDataTable(propertyInfoList, dataTable, bookList, columns, ordinalDic);
 
-            var result = BulkOperationsHelper.BuildInsertQueryFromDataTable(new Dictionary<string, string>(), dataTable, "Id", columns, ordinalDic, null, schemaDetail);
-            var result2 = BulkOperationsHelper.BuildInsertQueryFromDataTable(new Dictionary<string, string>(), dataTable, "Id", columns, ordinalDic, 
-                new BulkCopySettings(){SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity}, schemaDetail);
+            var result = BulkOperationsHelper.BuildInsertQueryFromDataTable(new Dictionary<string, string>(), dataTable, "Id", columns, null, schemaDetail, Constants.TempTableName);
+            var result2 = BulkOperationsHelper.BuildInsertQueryFromDataTable(new Dictionary<string, string>(), dataTable, "Id", columns, 
+                new BulkCopySettings(){SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity}, schemaDetail, Constants.TempTableName);
 
             Assert.AreEqual("INSERT INTO #TmpTable ([Description], [ISBN], [Title]) VALUES (@Description1, @ISBN1, @Title1)", result.InsertQuery);
             Assert.AreEqual("INSERT INTO #TmpTable ([Description], [Id], [ISBN], [Title]) VALUES (@Description1, @Id1, @ISBN1, @Title1)", result2.InsertQuery);
@@ -281,9 +281,9 @@ namespace SqlBulkTools.UnitTests
             var dataTable = BulkOperationsHelper.CreateDataTable<Book>(propertyInfoList, columns, null, ordinalDic);
             BulkOperationsHelper.ConvertListToDataTable(propertyInfoList, dataTable, bookList, columns, ordinalDic);
 
-            var result = BulkOperationsHelper.BuildInsertQueryFromDataTable(new Dictionary<string, string>(), dataTable, "Id", columns, ordinalDic, null, schemaDetail);
-            var result2 = BulkOperationsHelper.BuildInsertQueryFromDataTable(new Dictionary<string, string>(), dataTable, "Id", columns, ordinalDic,
-                new BulkCopySettings() { SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity }, schemaDetail);
+            var result = BulkOperationsHelper.BuildInsertQueryFromDataTable(new Dictionary<string, string>(), dataTable, "Id", columns, null, schemaDetail, Constants.TempTableName);
+            var result2 = BulkOperationsHelper.BuildInsertQueryFromDataTable(new Dictionary<string, string>(), dataTable, "Id", columns,
+                new BulkCopySettings() { SqlBulkCopyOptions = SqlBulkCopyOptions.KeepIdentity }, schemaDetail, Constants.TempTableName);
 
             Assert.AreEqual("INSERT INTO #TmpTable ([Description], [ISBN], [Title]) VALUES (@Description1, @ISBN1, @Title1), " +
                             "(@Description2, @ISBN2, @Title2), (@Description3, @ISBN3, @Title3)", result.InsertQuery);

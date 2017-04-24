@@ -264,7 +264,7 @@ namespace SqlBulkTools
                 {
 
                     var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn, _columns,
-                        _ordinalDic, _bulkCopySettings, schemaDetail, tableName: Constants.TempTableName, keepIdentity: true, keepInternalId: true);
+                         _bulkCopySettings, schemaDetail, tableName: Constants.TempTableName, keepIdentity: true, keepInternalId: true);
                     command.CommandText = tempTableSetup.InsertQuery;
                     command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
                     command.ExecuteNonQuery();
@@ -374,7 +374,7 @@ namespace SqlBulkTools
                 {
 
                     var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn, _columns,
-                        _ordinalDic, _bulkCopySettings, schemaDetail);
+                        _bulkCopySettings, schemaDetail, Constants.TempTableName, keepIdentity: true, keepInternalId: true);
                     command.CommandText = tempTableSetup.InsertQuery;
                     command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
                     await command.ExecuteNonQueryAsync();

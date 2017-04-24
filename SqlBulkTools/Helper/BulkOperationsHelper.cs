@@ -93,7 +93,7 @@ namespace SqlBulkTools
             if (customColumnMappings.TryGetValue(propertyName, out actualPropertyName))
                 return actualPropertyName;
 
-                return propertyName;
+            return propertyName;
         }
 
 
@@ -502,7 +502,7 @@ namespace SqlBulkTools
             return command.ToString();
         }
 
-        internal static string BuildInsertIntoSet(HashSet<string> columns, string identityColumn, string fullQualifiedTableName, 
+        internal static string BuildInsertIntoSet(HashSet<string> columns, string identityColumn, string fullQualifiedTableName,
             bool keepIdentity = false, bool keepInternalId = false)
         {
             StringBuilder command = new StringBuilder();
@@ -542,15 +542,15 @@ namespace SqlBulkTools
         {
             int paramCount = columns.Count * dt.Rows.Count;
 
-            if (dt.Rows.Count <= Constants.BulkCopyRecordThreshold 
+            if (dt.Rows.Count <= Constants.BulkCopyRecordThreshold
                 && paramCount <= Constants.MaxSqlParameters)
                 return BulkInsertStrategyType.MultiValueInsert;
 
             return BulkInsertStrategyType.BulkCopy;
         }
 
-        internal static TempTableSetup BuildInsertQueryFromDataTable(Dictionary<string, string> customColumnDic, DataTable dt, string identityColumn, HashSet<string> columns, 
-            Dictionary<string, int> ordinalDic, BulkCopySettings bulkCopySettings, SchemaDetail schemaDetail, string tableName = null, 
+        internal static TempTableSetup BuildInsertQueryFromDataTable(Dictionary<string, string> customColumnDic, DataTable dt, string identityColumn, HashSet<string> columns,
+            BulkCopySettings bulkCopySettings, SchemaDetail schemaDetail, string tableName,
             bool keepIdentity = false, bool keepInternalId = false)
         {
             TempTableSetup tbl = new TempTableSetup();
@@ -563,77 +563,76 @@ namespace SqlBulkTools
             command.Append(BuildInsertIntoSet(columns, identityColumn, tableName ?? Constants.TempTableName, shouldKeepIdentity, keepInternalId));
             command.Append("VALUES ");
 
-            int totalCols = columns.Count(x => (x != Constants.InternalId || keepInternalId) && (x != identityColumn) || shouldKeepIdentity);
+            var columnsToIterate = columns.Where(x => (x != Constants.InternalId || keepInternalId) &&
+                                                      (x != identityColumn || shouldKeepIdentity))
+                .OrderBy(x => x);
+
+            int totalCols = columnsToIterate.Count();
             int currentCol = 0;
 
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 command.Append("(");
-                foreach (var column in columns.OrderBy(x => x))
+                foreach (var column in columnsToIterate)
                 {
                     currentCol++;
 
-                    if ((column != Constants.InternalId || keepInternalId) && (column != identityColumn) || shouldKeepIdentity)
+                    if (columns.Contains(column))
                     {
-                        int ordinal;
+                        var colValue = dt.Rows[i][column];
+                        string paramName = $"@{column}{i + 1}";
 
-                        if (ordinalDic.TryGetValue(column, out ordinal))
+                        PrecisionType precisionType;
+                        bool isColumnNullable;
+                        string strLength;
+
+                        schemaDetail.NullableDic.TryGetValue(column, out isColumnNullable);
+
+                        if (schemaDetail.NumericPrecisionTypeDic.TryGetValue(column, out precisionType))
                         {
-                            var colValue = dt.Rows[i][ordinal];
-                            string paramName = $"@{column}{i + 1}";
-
-                            PrecisionType precisionType;
-                            bool isColumnNullable;
-                            string strLength;
-
-                            schemaDetail.NullableDic.TryGetValue(column, out isColumnNullable);
-
-                            if (schemaDetail.NumericPrecisionTypeDic.TryGetValue(column, out precisionType))
+                            sqlParamList.Add(new SqlParameter(paramName, colValue)
                             {
-                                sqlParamList.Add(new SqlParameter(paramName, colValue)
-                                {
-                                    Precision = byte.Parse(precisionType.NumericPrecision),
-                                    Scale = byte.Parse(precisionType.NumericScale),
-                                    IsNullable = isColumnNullable
-                                });
-                            }
-                            else if (schemaDetail.MaxCharDic.TryGetValue(column, out strLength))
-                            {
-                                sqlParamList.Add(new SqlParameter(paramName, colValue)
-                                {
-                                    Size = int.Parse(strLength),
-                                    IsNullable = isColumnNullable
-                                });
-                            }
-                            else if (colValue is SqlGeometry)
-                            {
-                                sqlParamList.Add(new SqlParameter(paramName, colValue)
-                                {
-                                    IsNullable = isColumnNullable,
-                                    UdtTypeName = "geometry"
-                                });
-                            }
-                            else if (colValue is SqlGeography)
-                            {
-                                sqlParamList.Add(new SqlParameter(paramName, colValue)
-                                {
-                                    IsNullable = isColumnNullable,
-                                    UdtTypeName = "geography"
-                                });
-                            }
-                            else
-                            {
-                                sqlParamList.Add(new SqlParameter(paramName, colValue)
-                                {
-                                    IsNullable = isColumnNullable
-                                });
-                            }
-                            
-                            command.Append(paramName);
-
-                            if (currentCol != totalCols)
-                                command.Append(", ");
+                                Precision = byte.Parse(precisionType.NumericPrecision),
+                                Scale = byte.Parse(precisionType.NumericScale),
+                                IsNullable = isColumnNullable
+                            });
                         }
+                        else if (schemaDetail.MaxCharDic.TryGetValue(column, out strLength))
+                        {
+                            sqlParamList.Add(new SqlParameter(paramName, colValue)
+                            {
+                                Size = int.Parse(strLength),
+                                IsNullable = isColumnNullable
+                            });
+                        }
+                        else if (colValue is SqlGeometry)
+                        {
+                            sqlParamList.Add(new SqlParameter(paramName, colValue)
+                            {
+                                IsNullable = isColumnNullable,
+                                UdtTypeName = "geometry"
+                            });
+                        }
+                        else if (colValue is SqlGeography)
+                        {
+                            sqlParamList.Add(new SqlParameter(paramName, colValue)
+                            {
+                                IsNullable = isColumnNullable,
+                                UdtTypeName = "geography"
+                            });
+                        }
+                        else
+                        {
+                            sqlParamList.Add(new SqlParameter(paramName, colValue)
+                            {
+                                IsNullable = isColumnNullable
+                            });
+                        }
+
+                        command.Append(paramName);
+
+                        if (currentCol != totalCols)
+                            command.Append(", ");
                     }
                 }
 
@@ -1253,12 +1252,12 @@ namespace SqlBulkTools
 
             if (operationType == OperationType.Insert)
             {
-                
+
 
                 command.CommandText =
                     $"SELECT {identityColumn} FROM {Constants.TempOutputTableName} ORDER BY {identityColumn};";
 
-                
+
                 using (SqlDataReader reader = command.ExecuteReader())
                 {
                     var items = list.ToList();
@@ -1354,7 +1353,7 @@ namespace SqlBulkTools
                 + "OUTPUT INSERTED.[" + identityColumn + "] INTO "
                 + Constants.TempOutputTableName + "([" + identityColumn + "]) "
                 + BuildSelectSet(columns, Constants.SourceAlias, identityColumn)
-                + " FROM " + Constants.TempTableName + " AS Source; "+
+                + " FROM " + Constants.TempTableName + " AS Source; " +
                 "DROP TABLE " + Constants.TempTableName + ";";
 
             return comm;

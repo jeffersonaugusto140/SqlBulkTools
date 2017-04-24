@@ -123,7 +123,7 @@ namespace SqlBulkTools
                     {
 
                         var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn,
-                            _columns, _ordinalDic, _bulkCopySettings, schemaDetail, Constants.TempTableName, keepIdentity: true, keepInternalId: true);
+                            _columns, _bulkCopySettings, schemaDetail, Constants.TempTableName, keepIdentity: true, keepInternalId: true);
                         command.CommandText = tempTableSetup.InsertQuery;
                         command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
                         command.ExecuteNonQuery();
@@ -146,8 +146,7 @@ namespace SqlBulkTools
                          BulkInsertStrategyType.MultiValueInsert)
                 {
                     var tableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn,
-                    _columns,
-                    _ordinalDic, _bulkCopySettings, schemaDetail, destinationTableName);
+                    _columns, _bulkCopySettings, schemaDetail, destinationTableName);
                     command.CommandText = GetSetIdentityCmd(on: true);
                     command.CommandText += tableSetup.InsertQuery;
                     command.CommandText += " " + GetSetIdentityCmd(on: false);
@@ -254,17 +253,17 @@ namespace SqlBulkTools
                     command.CommandText = schemaDetail.BuildCreateTableQuery;
                     await command.ExecuteNonQueryAsync();
 
-                    if (BulkOperationsHelper.GetBulkInsertStrategyType(dt, _columns) ==
-                        BulkInsertStrategyType.MultiValueInsert)
-                    {
+                    //if (BulkOperationsHelper.GetBulkInsertStrategyType(dt, _columns) ==
+                    //    BulkInsertStrategyType.MultiValueInsert)
+                    //{
 
-                        var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn, _columns,
-                            _ordinalDic, _bulkCopySettings, schemaDetail);
-                        command.CommandText = tempTableSetup.InsertQuery;
-                        command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
-                        await command.ExecuteNonQueryAsync();
-                    }
-                    else
+                    //    var tempTableSetup = BulkOperationsHelper.BuildInsertQueryFromDataTable(_customColumnMappings, dt, _identityColumn, _columns,
+                    //        _bulkCopySettings, schemaDetail, destinationTableName, keepIdentity: true, keepInternalId: true);
+                    //    command.CommandText = tempTableSetup.InsertQuery;
+                    //    command.Parameters.AddRange(tempTableSetup.SqlParameterList.ToArray());
+                    //    await command.ExecuteNonQueryAsync();
+                    //}
+                    //else
                         await BulkOperationsHelper.InsertToTmpTableWithBulkCopyAsync(connection, dt, _bulkCopySettings);
 
                     command.CommandText = BulkOperationsHelper.GetInsertIntoStagingTableCmd(command, connection, _schema, _tableName,

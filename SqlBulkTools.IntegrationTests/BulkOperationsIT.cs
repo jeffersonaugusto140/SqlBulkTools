@@ -1427,19 +1427,6 @@ namespace SqlBulkTools.IntegrationTests
 
             BulkDelete(_dataAccess.GetBookList());
 
-            //using (
-            //    var conn = new SqlConnection(ConfigurationManager.ConnectionStrings["SqlBulkToolsTest"].ConnectionString)
-            //    )
-            //using (var command = new SqlCommand(
-            //    "DBCC CHECKIDENT ('[dbo].[Books]', RESEED, 10);", conn)
-            //{
-            //    CommandType = CommandType.Text
-            //})
-            //{
-            //    conn.Open();
-            //    command.ExecuteNonQuery();
-            //}
-
             _dataAccess.ReseedBookIdentity(10);
 
             List<Book> books = _randomizer.GetRandomCollection(30);

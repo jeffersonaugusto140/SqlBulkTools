@@ -132,10 +132,12 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdate_PassesWithCustomIdentityColumn()
         {
+            var rows = 3;
+
             var bulk = new BulkOperations();
             List<CustomIdentityColumnNameTest> customIdentityColumnList = new List<CustomIdentityColumnNameTest>();
 
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < rows; i++)
             {
                 customIdentityColumnList.Add(new CustomIdentityColumnNameTest
                 {
@@ -168,7 +170,7 @@ namespace SqlBulkTools.IntegrationTests
                 trans.Complete();
             }
 
-            Assert.IsTrue(_dataAccess.GetCustomIdentityColumnNameTestList().Count == 30);
+            Assert.IsTrue(_dataAccess.GetCustomIdentityColumnNameTestList().Count == rows);
         }
 
         [TestMethod]
@@ -678,6 +680,7 @@ namespace SqlBulkTools.IntegrationTests
                         .WithSchema("AnotherSchema")
                         .AddAllColumns()
                         .BulkInsert()
+                        .SetIdentityColumn(x => x.Id)
                         .Commit(conn); // Add new rows
 
                 }
@@ -1287,7 +1290,7 @@ namespace SqlBulkTools.IntegrationTests
                 trans.Complete();
             }
 
-            var test = _dataAccess.GetBookList().ElementAt(10); // Random book within the 30 elements
+            var test = _dataAccess.GetBookList().ElementAt(1); 
             var expected = books.Single(x => x.ISBN == test.ISBN);
 
             Assert.AreEqual(expected.Id, test.Id);
@@ -1378,7 +1381,7 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkDeleteWithSelectedColumns_TestIdentityOutput()
         {
-            const int rows = 3;
+            const int rows = 15;
             BulkDelete(_dataAccess.GetBookList());
 
             _dataAccess.ReseedBookIdentity(10);
@@ -1742,6 +1745,7 @@ namespace SqlBulkTools.IntegrationTests
                         .WithTable("Books")
                         .AddAllColumns()
                         .BulkInsert()
+                        .SetIdentityColumn(x => x.Id)
                         .Commit(conn);
 
                     books = _randomizer.GetRandomCollection(rows);
@@ -1774,9 +1778,9 @@ namespace SqlBulkTools.IntegrationTests
                 trans.Complete();
             }
 
-            Assert.AreEqual(30, _dataAccess.GetBookList().Count(x => x.WarehouseId == 2));
+            Assert.AreEqual(4, _dataAccess.GetBookList().Count(x => x.WarehouseId == 2));
 
-            Assert.AreEqual(15, _dataAccess.GetBookList().Count(x => x.WarehouseId == 1));
+            Assert.AreEqual(1, _dataAccess.GetBookList().Count(x => x.WarehouseId == 1));
         }
 
         [TestMethod]
@@ -1811,6 +1815,7 @@ namespace SqlBulkTools.IntegrationTests
                         .WithTable("Books")
                         .AddAllColumns()
                         .BulkInsert()
+                        .SetIdentityColumn(x => x.Id)
                         .Commit(conn);
 
                     for (int i = 0; i < books.Count; i++)
@@ -1860,6 +1865,7 @@ namespace SqlBulkTools.IntegrationTests
                         .WithTable("Books")
                         .AddAllColumns()
                         .BulkInsert()
+                        .SetIdentityColumn(x => x.Id)
                         .Commit(conn);
 
                     books[2].Price = 1234567;
@@ -1908,9 +1914,10 @@ namespace SqlBulkTools.IntegrationTests
                         .WithTable("Books")
                         .AddAllColumns()
                         .BulkInsert()
+                        .SetIdentityColumn(x => x.Id)
                         .Commit(conn);
 
-                    books[17].Price = 1234567;
+                    books[2].Price = 1234567;
 
                     bulk.Setup<Book>()
                         .ForCollection(books)
@@ -1960,6 +1967,7 @@ namespace SqlBulkTools.IntegrationTests
                         .WithTable("Books")
                         .AddAllColumns()
                         .BulkInsert()
+                        .SetIdentityColumn(x => x.Id)
                         .Commit(conn);
 
                     books[0].Price = 17;
@@ -2014,6 +2022,7 @@ namespace SqlBulkTools.IntegrationTests
                         .WithTable("Books")
                         .AddAllColumns()
                         .BulkInsert()
+                        .SetIdentityColumn(x => x.Id)
                         .Commit(conn);
 
                     // Only delete if warehouse is 1
@@ -2066,6 +2075,7 @@ namespace SqlBulkTools.IntegrationTests
                         .WithTable("Books")
                         .AddAllColumns()
                         .BulkInsert()
+                        .SetIdentityColumn(x => x.Id)
                         .Commit(conn);
 
                     // Only delete when price more than 10 and description is null
@@ -2119,6 +2129,7 @@ namespace SqlBulkTools.IntegrationTests
                         .WithTable("Books")
                         .AddAllColumns()
                         .BulkInsert()
+                        .SetIdentityColumn(x => x.Id)
                         .Commit(conn);
 
                     // Only delete when price more than 10 and description is null
@@ -2136,7 +2147,7 @@ namespace SqlBulkTools.IntegrationTests
                 trans.Complete();
             }
 
-            Assert.AreEqual(6, _dataAccess.GetBookList().Count);
+            Assert.AreEqual(4, _dataAccess.GetBookList().Count);
         }
 
         [TestMethod]
@@ -2168,6 +2179,7 @@ namespace SqlBulkTools.IntegrationTests
                         .WithTable("Books")
                         .AddAllColumns()
                         .BulkInsert()
+                        .SetIdentityColumn(x => x.Id)
                         .Commit(conn);
 
                     // Only delete if price more than 50
