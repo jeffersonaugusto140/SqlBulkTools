@@ -249,7 +249,7 @@ namespace SqlBulkTools.QueryOperations
                             && x.ParameterName == $"@{_identityColumn}")
                         {
                             PropertyInfo propertyInfo = _singleEntity.GetType().GetProperty(_identityColumn);
-                            propertyInfo.SetValue(_singleEntity, x.Value);
+                            if (propertyInfo != null) propertyInfo.SetValue(_singleEntity, x.Value);
                             break;
                         }
                     }

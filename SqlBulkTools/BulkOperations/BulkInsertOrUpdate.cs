@@ -308,7 +308,7 @@ namespace SqlBulkTools
                 for (int i = 0; i < e.Errors.Count; i++)
                 {
                     // Error 8102 is identity error. 
-                    if (e.Errors[i].Number == 8102)
+                    if (e.Errors[i].Number == 544 || e.Errors[i].Number == 8102)
                     {
                         // Expensive but neccessary to inform user of an important configuration setup. 
                         throw new IdentityException(e.Errors[i].Message);
@@ -419,7 +419,7 @@ namespace SqlBulkTools
                 for (int i = 0; i < e.Errors.Count; i++)
                 {
                     // Error 8102 is identity error. 
-                    if (e.Errors[i].Number == 8102)
+                    if (e.Errors[i].Number == 544 || e.Errors[i].Number == 8102)
                     {
                         // Expensive but neccessary to inform user of an important configuration setup. 
                         throw new IdentityException(e.Errors[i].Message);
