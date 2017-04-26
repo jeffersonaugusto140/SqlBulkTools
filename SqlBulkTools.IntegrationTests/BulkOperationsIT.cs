@@ -36,9 +36,8 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdate_ExcludeAllColumnsFromUpdate()
         {
-            var bulk = new BulkOperations();
-
             const int rows = 20;
+            var bulk = new BulkOperations();
 
             // Clean up existing records in Books table.
             BulkDelete(_dataAccess.GetBookList());
@@ -132,10 +131,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdate_PassesWithCustomIdentityColumn()
         {
-            var bulk = new BulkOperations();
+            const int rows = 30;
+            var bulk = new BulkOperations(); 
             List<CustomIdentityColumnNameTest> customIdentityColumnList = new List<CustomIdentityColumnNameTest>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 customIdentityColumnList.Add(new CustomIdentityColumnNameTest
                 {
@@ -168,16 +168,17 @@ namespace SqlBulkTools.IntegrationTests
                 trans.Complete();
             }
 
-            Assert.IsTrue(_dataAccess.GetCustomIdentityColumnNameTestList().Count == 30);
+            Assert.IsTrue(_dataAccess.GetCustomIdentityColumnNameTestList().Count == rows);
         }
 
         [TestMethod]
         public void SqlBulkTools_BulkInsertForComplexType_AddAllColumns()
         {
+            const int rows = 30;
             var bulk = new BulkOperations();
             List<ComplexTypeModel> complexTypeModelList = new List<ComplexTypeModel>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 complexTypeModelList.Add(new ComplexTypeModel
                 {
@@ -224,10 +225,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdateForComplexType_AddAllColumns()
         {
+            const int rows = 30;
             var bulk = new BulkOperations();
             List<ComplexTypeModel> complexTypeModelList = new List<ComplexTypeModel>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 complexTypeModelList.Add(new ComplexTypeModel
                 {
@@ -275,10 +277,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertForComplexType_AddColumnsManually()
         {
+            const int rows = 30;
             var bulk = new BulkOperations();
             List<ComplexTypeModel> complexTypeModelList = new List<ComplexTypeModel>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 complexTypeModelList.Add(new ComplexTypeModel
                 {
@@ -592,9 +595,10 @@ namespace SqlBulkTools.IntegrationTests
         [MyExpectedException(typeof(IdentityException), "Cannot update identity column 'Id'. SQLBulkTools requires the SetIdentityColumn method to be configured if an identity column is being used. Please reconfigure your setup and try again.")]
         public void SqlBulkTools_IdentityColumnWhenNotSet_ThrowsIdentityException()
         {
+            const int rows = 30;
             // Arrange
             BulkDelete(_dataAccess.GetBookList());
-            _bookCollection = _randomizer.GetRandomCollection(20);
+            _bookCollection = _randomizer.GetRandomCollection(rows);
 
             BulkOperations bulk = new BulkOperations();
 
@@ -614,9 +618,10 @@ namespace SqlBulkTools.IntegrationTests
         public void SqlBulkTools_IdentityColumnSet_UpdatesTargetWhenSetIdentityColumn()
         {
             // Arrange
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
-            _bookCollection = _randomizer.GetRandomCollection(20);
+            _bookCollection = _randomizer.GetRandomCollection(30);
             string testDesc = "New Description";
 
             BulkInsert(_bookCollection);
@@ -647,12 +652,13 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_WithConflictingTableName_DeletesAndInsertsToCorrectTable()
         {
-            // Arrange           
+            // Arrange     
+            const int rows = 30;      
             BulkOperations bulk = new BulkOperations();
 
             List<SchemaTest2> conflictingSchemaCol = new List<SchemaTest2>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 conflictingSchemaCol.Add(new SchemaTest2() { ColumnA = "ColumnA " + i });
             }
@@ -690,12 +696,13 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_WithCustomSchema_WhenWithTableIncludesSchemaName()
         {
-            // Arrange           
+            // Arrange      
+            const int rows = 30;     
             BulkOperations bulk = new BulkOperations();
 
             List<SchemaTest2> conflictingSchemaCol = new List<SchemaTest2>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 conflictingSchemaCol.Add(new SchemaTest2() { ColumnA = "ColumnA " + i });
             }
@@ -780,12 +787,13 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkDeleteOnId_AddItemsThenRemovesAllItems()
         {
-            // Arrange           
+            // Arrange    
+            const int rows = 30;       
             BulkOperations bulk = new BulkOperations();
 
             List<SchemaTest1> col = new List<SchemaTest1>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 col.Add(new SchemaTest1() { ColumnB = "ColumnA " + i });
             }
@@ -828,8 +836,9 @@ namespace SqlBulkTools.IntegrationTests
         public void SqlBulkTools_BulkUpdate_PartialUpdateOnlyUpdatesSelectedColumns()
         {
             // Arrange
+            const int rows = 30;
             BulkOperations bulk = new BulkOperations();
-            _bookCollection = _randomizer.GetRandomCollection(30);
+            _bookCollection = _randomizer.GetRandomCollection(rows);
 
             BulkDelete(_dataAccess.GetBookList());
             BulkInsert(_bookCollection);
@@ -868,11 +877,12 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertWithColumnMappings_CorrectlyMapsColumns()
         {
+            const int rows = 30;
             BulkOperations bulk = new BulkOperations();
 
             List<CustomColumnMappingTest> col = new List<CustomColumnMappingTest>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 col.Add(new CustomColumnMappingTest() { NaturalIdTest = i, ColumnXIsDifferent = "ColumnX " + i, ColumnYIsDifferentInDatabase = i });
             }
@@ -909,11 +919,12 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdateWithColumnMappings_CorrectlyMapsColumns()
         {
+            const int rows = 30;
             BulkOperations bulk = new BulkOperations();
 
             List<CustomColumnMappingTest> col = new List<CustomColumnMappingTest>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 col.Add(new CustomColumnMappingTest() { NaturalIdTest = i, ColumnXIsDifferent = "ColumnX " + i, ColumnYIsDifferentInDatabase = i });
             }
@@ -953,11 +964,12 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdateWithManualColumnMappings_CorrectlyMapsColumns()
         {
+            const int rows = 30;
             BulkOperations bulk = new BulkOperations();
 
             List<CustomColumnMappingTest> col = new List<CustomColumnMappingTest>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 col.Add(new CustomColumnMappingTest() { NaturalIdTest = i, ColumnXIsDifferent = "ColumnX " + i, ColumnYIsDifferentInDatabase = i });
             }
@@ -996,11 +1008,12 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkUpdateWithManualColumnMappings_CorrectlyMapsColumns()
         {
+            const int rows = 30;
             BulkOperations bulk = new BulkOperations();
 
             List<CustomColumnMappingTest> col = new List<CustomColumnMappingTest>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 col.Add(new CustomColumnMappingTest() { NaturalIdTest = i, ColumnXIsDifferent = "ColumnX " + i, ColumnYIsDifferentInDatabase = i });
             }
@@ -1051,11 +1064,12 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkUpdateWithColumnMappings_CorrectlyMapsColumns()
         {
+            const int rows = 30;
             BulkOperations bulk = new BulkOperations();
 
             List<CustomColumnMappingTest> col = new List<CustomColumnMappingTest>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 col.Add(new CustomColumnMappingTest() { NaturalIdTest = i, ColumnXIsDifferent = "ColumnX " + i, ColumnYIsDifferentInDatabase = i });
             }
@@ -1109,12 +1123,12 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_WhenUsingReservedSqlKeywords()
         {
-            //_db.ReservedColumnNameTest.RemoveRange(_db.ReservedColumnNameTest.ToList());
+            const int rows = 30;
             BulkOperations bulk = new BulkOperations();
 
             var list = new List<ReservedColumnNameTest>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 list.Add(new ReservedColumnNameTest() { Key = i });
             }
@@ -1143,16 +1157,17 @@ namespace SqlBulkTools.IntegrationTests
                 trans.Complete();
             }
 
-            Assert.IsTrue(_dataAccess.GetReservedColumnNameTests().Count == 30);
+            Assert.IsTrue(_dataAccess.GetReservedColumnNameTests().Count == rows);
         }
 
         [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdate_TestIdentityOutput()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             using (TransactionScope trans = new TransactionScope())
             {
@@ -1180,10 +1195,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdate_TestNullComparisonWithMatchTargetOn()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             books.ElementAt(0).Title = "Test_Null_Comparison";
             books.ElementAt(0).ISBN = null;
@@ -1208,7 +1224,7 @@ namespace SqlBulkTools.IntegrationTests
 
             var test = _dataAccess.GetBookList().Single(x => x.Title == "Test_Null_Comparison");
 
-            Assert.AreEqual(30, _dataAccess.GetBookList().Count);
+            Assert.AreEqual(rows, _dataAccess.GetBookList().Count);
             Assert.AreEqual(null, test.ISBN);
 
         }
@@ -1216,11 +1232,12 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdate_ExcludeColumnTest()
         {
+            const int rows = 30;
             // Remove existing records for a fresh test
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
             // Get a list with random data
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             // Set the original date as the date Donald Trump somehow won the US election. 
             var originalDate = new DateTime(2016, 11, 9);
@@ -1287,10 +1304,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdateWithSelectedColumns_TestIdentityOutput()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             using (TransactionScope trans = new TransactionScope())
             {
@@ -1322,10 +1340,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsert_TestIdentityOutput()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
 
             BulkOperations bulk = new BulkOperations();
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             using (TransactionScope trans = new TransactionScope())
             {
@@ -1356,10 +1375,10 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertWithSelectedColumns_TestIdentityOutput()
         {
-
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             using (TransactionScope trans = new TransactionScope())
             {
@@ -1401,12 +1420,12 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkDeleteWithSelectedColumns_TestIdentityOutput()
         {
-
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
 
             _dataAccess.ReseedBookIdentity(10);
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
             BulkInsert(books);
 
             using (TransactionScope trans = new TransactionScope())
@@ -1442,11 +1461,12 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkUpdateWithSelectedColumns_TestIdentityOutput()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
 
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
             BulkInsert(books);
 
             using (TransactionScope trans = new TransactionScope())
@@ -1479,9 +1499,10 @@ namespace SqlBulkTools.IntegrationTests
         [MyExpectedException(typeof(SqlBulkToolsException), "Only value, string, char[], byte[], SqlGeometry, SqlGeography and SqlXml types can be used with SqlBulkTools. Refer to https://msdn.microsoft.com/en-us/library/cc716729(v=vs.110).aspx for more details.")]
         public void SqlBulkTools_BulkInsertAddInvalidDataType_ThrowsSqlBulkToolsExceptionException()
         {
+            const int rows = 30;
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
             BulkInsert(books);
 
             using (TransactionScope trans = new TransactionScope())
@@ -1504,10 +1525,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertWithGenericType()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            _bookCollection = _randomizer.GetRandomCollection(30);
+            _bookCollection = _randomizer.GetRandomCollection(rows);
 
             using (TransactionScope trans = new TransactionScope())
             {
@@ -1536,10 +1558,11 @@ namespace SqlBulkTools.IntegrationTests
         [MyExpectedException(typeof(SqlBulkToolsException), "No setter method available on property 'Id'. Could not write output back to property.")]
         public void SqlBulkTools_BulkInsertWithoutSetter_ThrowsMeaningfulException()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            _bookCollection = _randomizer.GetRandomCollection(30);
+            _bookCollection = _randomizer.GetRandomCollection(rows);
 
             using (TransactionScope trans = new TransactionScope())
             {
@@ -1569,10 +1592,11 @@ namespace SqlBulkTools.IntegrationTests
         [MyExpectedException(typeof(SqlBulkToolsException), "No setter method available on property 'Id'. Could not write output back to property.")]
         public void SqlBulkTools_BulkInsertOrUpdateWithPrivateIdentityField_ThrowsMeaningfulException()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
             List<BookWithPrivateIdentity> booksWithPrivateIdentity = new List<BookWithPrivateIdentity>();
 
             books.ForEach(x => booksWithPrivateIdentity.Add(new BookWithPrivateIdentity()
@@ -1607,10 +1631,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsert_KeepIdentity()
         {
+            const int rows = 30;
             var bulk = new BulkOperations();
             List<Book> bookList = new List<Book>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 bookList.Add(new Book
                 {
@@ -1654,10 +1679,12 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdate_KeepIdentity()
         {
+            const int rows = 30;
+
             var bulk = new BulkOperations();
             List<Book> bookList = new List<Book>();
 
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < rows; i++)
             {
                 bookList.Add(new Book
                 {
@@ -1722,10 +1749,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdateWithDeletePredicate_OnlyDeletesRecordsFromSpecifiedWarehouse()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             for (int i = 0; i < books.Count; i++)
             {
@@ -1751,7 +1779,7 @@ namespace SqlBulkTools.IntegrationTests
                         .BulkInsert()
                         .Commit(conn);
 
-                    books = _randomizer.GetRandomCollection(30);
+                    books = _randomizer.GetRandomCollection(rows);
 
                     for (int i = 0; i < books.Count; i++)
                     {
@@ -1782,19 +1810,20 @@ namespace SqlBulkTools.IntegrationTests
             }
 
             // 15 were initially added with warehouse id 2, 15 more were added in second insert. 
-            Assert.AreEqual(30, _dataAccess.GetBookList().Count(x => x.WarehouseId == 2));
+            Assert.AreEqual(rows, _dataAccess.GetBookList().Count(x => x.WarehouseId == 2));
 
             // 15 were initially added with warehouse id 1. 15 were deleted in second call and 15 were inserted.  
-            Assert.AreEqual(15, _dataAccess.GetBookList().Count(x => x.WarehouseId == 1));
+            Assert.AreEqual((rows / 2), _dataAccess.GetBookList().Count(x => x.WarehouseId == 1));
         }
 
         [TestMethod]
         public void SqlBulkTools_BulkUpdateWithPredicate_OnlyUpdateWhenWarehouseIs1()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             for (int i = 0; i < books.Count; i++)
             {
@@ -1848,10 +1877,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkUpdateWithPredicate_WhenBestSellerTrue()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             books[17].BestSeller = true;
 
@@ -1891,10 +1921,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkUpdateWithPredicate_WhenBestSellerFalse()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             foreach (var book in books)
                 book.BestSeller = true;
@@ -1939,10 +1970,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkUpdateWithPredicate_OnlyUpdateWhenPriceLessThanOrEqualTo20()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             for (int i = 0; i < books.Count; i++)
             {
@@ -1987,10 +2019,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkUpdateWithPredicate_OnlyDeleteWhenWarehouseIs1()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             for (int i = 0; i < books.Count; i++)
             {
@@ -2035,11 +2068,12 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkDeleteWithMultiplePredicate_WhenDescriptionIsNullAndPriceMoreThan10()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
 
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             for (int i = 0; i < books.Count; i++)
             {
@@ -2088,10 +2122,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkDeleteWithMultiplePredicate_WhenDescriptionIsNotNullAndPriceLessThan10()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             for (int i = 0; i < books.Count; i++)
             {
@@ -2137,10 +2172,11 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkUpdateWithPredicate_OnlyDeleteWhenPriceMoreThan50()
         {
+            const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
 
-            List<Book> books = _randomizer.GetRandomCollection(30);
+            List<Book> books = _randomizer.GetRandomCollection(rows);
 
             for (int i = 0; i < books.Count; i++)
             {
@@ -2183,6 +2219,7 @@ namespace SqlBulkTools.IntegrationTests
         [TestMethod]
         public void SqlBulkTools_BulkInsertOrUpdate_TestDataTypes()
         {
+            const int rows = 50;
             BulkDelete(_dataAccess.GetBookList());
 
             var todaysDate = DateTime.Today;
@@ -2191,7 +2228,7 @@ namespace SqlBulkTools.IntegrationTests
 
             List<TestDataType> dataTypeTestLargerCol = new List<TestDataType>(); // Uses BulkCopy strategy
 
-            for (int i = 0; i < 50; i++)
+            for (int i = 0; i < rows; i++)
             {
                 dataTypeTestLargerCol.Add(GetTestDataType(todaysDate));
             }
