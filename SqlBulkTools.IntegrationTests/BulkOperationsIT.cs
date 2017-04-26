@@ -621,7 +621,7 @@ namespace SqlBulkTools.IntegrationTests
             const int rows = 30;
             BulkDelete(_dataAccess.GetBookList());
             BulkOperations bulk = new BulkOperations();
-            _bookCollection = _randomizer.GetRandomCollection(30);
+            _bookCollection = _randomizer.GetRandomCollection(rows);
             string testDesc = "New Description";
 
             BulkInsert(_bookCollection);
